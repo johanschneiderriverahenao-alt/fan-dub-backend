@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: fan_dub_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: fan_dub_db
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - fan_dub_network
+
+  api:
+    build: .
+    container_name: fan_dub_api
+    ports:
+      - "8000:8000"
+    environment:
+      MONGODB_URL: mongodb://mongodb:27017
+      DATABASE_NAME: fan_dub_db
+      SECRET_KEY: your-secret-key-here
+      DEBUG: "False"
+    depends_on:
+      - mongodb
+    volumes:
+      - .:/app
+    networks:
+      - fan_dub_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  mongodb_data:
+
+networks:
+  fan_dub_network:
+    driver: bridge
