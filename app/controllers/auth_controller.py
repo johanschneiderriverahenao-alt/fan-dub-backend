@@ -5,7 +5,7 @@ Authentication controller for user login and token management.
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
-from passlib.context import CryptContext
+import bcrypt
 from jose import JWTError, jwt
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
@@ -17,8 +17,6 @@ from app.models.user import UserLogin, UserResponse, UserInDB, UserBase
 from app.utils.logger import get_logger, log_info, log_error
 
 logger = get_logger(__name__)
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class AuthController:
@@ -36,11 +34,13 @@ class AuthController:
             Hashed password string.
         """
         try:
-            # Truncate to 72 bytes (bcrypt limit) - not characters!
+            # Encode and truncate to 72 bytes (bcrypt hard limit)
             password_bytes = password.encode('utf-8')[:72]
-            password = password_bytes.decode('utf-8', errors='ignore')
-            hashed = pwd_context.hash(password)
-            return hashed
+            # Generate salt and hash
+            salt = bcrypt.gensalt()
+            hashed = bcrypt.hashpw(password_bytes, salt)
+            # Return as string for MongoDB storage
+            return hashed.decode('utf-8')
         except Exception as e:
             log_error(logger, "Error hashing password", {"error": str(e)})
             raise
@@ -58,9 +58,10 @@ class AuthController:
             True if password matches, False otherwise.
         """
         try:
+            # Encode and truncate to 72 bytes (bcrypt hard limit)
             password_bytes = plain_password.encode('utf-8')[:72]
-            plain_password = password_bytes.decode('utf-8', errors='ignore')
-            return pwd_context.verify(plain_password, hashed_password)
+            hashed_bytes = hashed_password.encode('utf-8')
+            return bcrypt.checkpw(password_bytes, hashed_bytes)
         except Exception as e:
             log_error(logger, "Error verifying password", {"error": str(e)})
             return False
