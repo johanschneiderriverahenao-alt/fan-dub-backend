@@ -36,6 +36,9 @@ class AuthController:
             Hashed password string.
         """
         try:
+            # Truncate to 72 bytes (bcrypt limit) - not characters!
+            password_bytes = password.encode('utf-8')[:72]
+            password = password_bytes.decode('utf-8', errors='ignore')
             hashed = pwd_context.hash(password)
             return hashed
         except Exception as e:
@@ -55,6 +58,8 @@ class AuthController:
             True if password matches, False otherwise.
         """
         try:
+            password_bytes = plain_password.encode('utf-8')[:72]
+            plain_password = password_bytes.decode('utf-8', errors='ignore')
             return pwd_context.verify(plain_password, hashed_password)
         except Exception as e:
             log_error(logger, "Error verifying password", {"error": str(e)})
