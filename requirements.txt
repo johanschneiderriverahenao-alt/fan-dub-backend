@@ -9,3 +9,8 @@ python-jose[cryptography]
 python-multipart
 email-validator
 pymongo
+itsdangerous
+starlette
+cloudinary
+flake8
+pylint
