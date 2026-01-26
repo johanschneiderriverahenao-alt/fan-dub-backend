@@ -186,7 +186,7 @@ class AuthController:
 
             try:
                 await database["audit_logs"].insert_one({
-                    "user_id": user["_id"],
+                    "user_id": str(user["_id"]),
                     "user_email": login_data.email,
                     "action": "LOGIN",
                     "status": "SUCCESS",
@@ -240,6 +240,7 @@ class AuthController:
                     detail="User not found"
                 )
 
+            user["_id"] = str(user["_id"])
             return UserInDB(**user).dict()
 
         except HTTPException:
@@ -288,7 +289,7 @@ class AuthController:
 
             try:
                 await database["audit_logs"].insert_one({
-                    "user_id": result.inserted_id,
+                    "user_id": str(result.inserted_id),
                     "user_email": user_data.email,
                     "action": "REGISTER",
                     "status": "SUCCESS",
@@ -378,3 +379,121 @@ class AuthController:
             log_error(logger, "Unexpected error changing password", {"error": str(e)})
             return JSONResponse(
                 status_code=500, content={"error": "Password change failed", "details": str(e)})
+
+    @staticmethod
+    async def get_user_profile(user_id: str) -> JSONResponse:
+        """
+        Get user profile information by user ID.
+
+        Args:
+            user_id: The ID of the user.
+
+        Returns:
+            JSONResponse with user profile data.
+        """
+        try:
+            user = await database["users"].find_one({"_id": ObjectId(user_id)})
+            if not user:
+                log_error(logger, f"User profile not found for user_id {user_id}")
+                return JSONResponse(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    content={"error": "User not found"}
+                )
+
+            user["_id"] = str(user["_id"])
+            if isinstance(user.get("created_at"), datetime):
+                user["created_at"] = user["created_at"].isoformat()
+
+            user_response = UserResponse(**user)
+            log_info(logger, f"User profile retrieved for user_id {user_id}")
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={"user": user_response.dict(by_alias=True)}
+            )
+
+        except Exception as e:
+            log_error(logger, "Error retrieving user profile", {"error": str(e)})
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": "Failed to retrieve user profile", "details": str(e)}
+            )
+
+    @staticmethod
+    async def delete_user(user_id: str) -> JSONResponse:
+        """
+        Delete a user and all related data from the database.
+
+        Args:
+            user_id: The ID of the user to delete.
+
+        Returns:
+            JSONResponse with operation result.
+        """
+        try:
+            user = await database["users"].find_one({"_id": ObjectId(user_id)})
+            if not user:
+                log_error(logger, f"User not found for deletion: user_id {user_id}")
+                return JSONResponse(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    content={"error": "User not found"}
+                )
+
+            user_email = user.get("email", "unknown")
+
+            try:
+                audit_delete_result = await database["audit_logs"].delete_many(
+                    {"user_id": str(user_id)}
+                )
+                log_info(
+                    logger,
+                    f"Deleted {audit_delete_result.deleted_count} audit logs for user {user_id}"
+                )
+            except Exception as audit_error:
+                log_error(
+                    logger,
+                    "Failed to delete audit logs during user deletion",
+                    {"error": str(audit_error)}
+                )
+
+            delete_result = await database["users"].delete_one({"_id": ObjectId(user_id)})
+
+            if delete_result.deleted_count == 0:
+                log_error(logger, f"Failed to delete user {user_id}")
+                return JSONResponse(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    content={"error": "Failed to delete user"}
+                )
+
+            try:
+                await database["audit_logs"].insert_one({
+                    "user_id": user_id,
+                    "user_email": user_email,
+                    "action": "USER_DELETION",
+                    "status": "SUCCESS",
+                    "details": {"deleted_by": "self"},
+                    "created_at": datetime.utcnow()
+                })
+            except Exception as audit_error:
+                log_error(
+                    logger,
+                    "Failed to create audit log for user deletion",
+                    {"error": str(audit_error)}
+                )
+
+            log_info(logger, f"User {user_id} ({user_email}) deleted successfully")
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "message": "User and related data deleted successfully",
+                    "user_email": user_email
+                }
+            )
+
+        except Exception as e:
+            log_error(logger, "Unexpected error deleting user", {"error": str(e)})
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": "User deletion failed", "details": str(e)}
+            )
