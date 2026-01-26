@@ -34,12 +34,9 @@ class AuthController:
             Hashed password string.
         """
         try:
-            # Encode and truncate to 72 bytes (bcrypt hard limit)
             password_bytes = password.encode('utf-8')[:72]
-            # Generate salt and hash
             salt = bcrypt.gensalt()
             hashed = bcrypt.hashpw(password_bytes, salt)
-            # Return as string for MongoDB storage
             return hashed.decode('utf-8')
         except Exception as e:
             log_error(logger, "Error hashing password", {"error": str(e)})
@@ -58,7 +55,6 @@ class AuthController:
             True if password matches, False otherwise.
         """
         try:
-            # Encode and truncate to 72 bytes (bcrypt hard limit)
             password_bytes = plain_password.encode('utf-8')[:72]
             hashed_bytes = hashed_password.encode('utf-8')
             return bcrypt.checkpw(password_bytes, hashed_bytes)
@@ -188,7 +184,6 @@ class AuthController:
 
             log_info(logger, f"User {login_data.email} logged in successfully")
 
-            # Create successful login audit log
             try:
                 await database["audit_logs"].insert_one({
                     "user_id": user["_id"],
@@ -255,6 +250,7 @@ class AuthController:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials"
             ) from e
+
     @staticmethod
     async def register(user_data: UserBase) -> JSONResponse:
         """
