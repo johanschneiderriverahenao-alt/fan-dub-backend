@@ -13,7 +13,7 @@ from bson import ObjectId
 
 from app.config.settings import settings
 from app.config.database import database
-from app.models.user import UserLogin, UserResponse, UserInDB, UserBase
+from app.models.user import UserLogin, UserResponse, UserInDB, UserBase, ChangePassword
 from app.utils.logger import get_logger, log_info, log_error
 
 logger = get_logger(__name__)
@@ -255,6 +255,7 @@ class AuthController:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials"
             ) from e
+
     @staticmethod
     async def register(user_data: UserBase) -> JSONResponse:
         """
@@ -318,3 +319,67 @@ class AuthController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={"error": "Registration failed", "details": str(e)}
             )
+
+    @staticmethod
+    async def change_password(password_data: ChangePassword) -> JSONResponse:
+        """
+        Change a user's password when email and current password match.
+
+        Args:
+            password_data: Contains `email`, `current_password`, and `new_password`.
+
+        Returns:
+            JSONResponse with operation result.
+        """
+        try:
+            db = database["users"]
+            user = await db.find_one({"email": password_data.email})
+            if not user:
+                log_info(logger, f"Password change attempt for unknown email {password_data.email}")
+                return JSONResponse(status_code=404, content={"error": "User not found"})
+
+            if not AuthController.verify_password(
+                    password_data.current_password, user["password_hash"]):
+                try:
+                    await database["audit_logs"].insert_one({
+                        "user_email": password_data.email,
+                        "action": "PASSWORD_CHANGE",
+                        "status": "FAILED",
+                        "details": {"reason": "Incorrect current password"},
+                        "created_at": datetime.utcnow()
+                    })
+                except Exception as audit_error:
+                    log_error(
+                        logger, "Failed to create audit log for failed password change",
+                        {"error": str(audit_error)})
+
+                log_info(logger, f"Incorrect current password for email {password_data.email}")
+                return JSONResponse(
+                        status_code=401, content={"error": "Current password is incorrect"})
+
+            new_hashed = AuthController.hash_password(password_data.new_password)
+            await db.update_one({"_id": user["_id"]}, {"$set": {"password_hash": new_hashed}})
+
+            try:
+                await database["audit_logs"].insert_one({
+                    "user_id": str(user.get("_id")),
+                    "user_email": password_data.email,
+                    "action": "PASSWORD_CHANGE",
+                    "status": "SUCCESS",
+                    "details": {"method": "email_and_current_password"},
+                    "created_at": datetime.utcnow()
+                })
+            except Exception as audit_error:
+                log_error(
+                    logger,
+                    "Failed to create audit log for successful password change",
+                    {"error": str(audit_error)})
+
+            log_info(logger, f"Password changed successfully for email {password_data.email}")
+            return JSONResponse(
+                status_code=200, content={"message": "Password changed successfully"})
+
+        except Exception as e:
+            log_error(logger, "Unexpected error changing password", {"error": str(e)})
+            return JSONResponse(
+                status_code=500, content={"error": "Password change failed", "details": str(e)})

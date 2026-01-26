@@ -6,7 +6,7 @@ Authentication views for user login operations.
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app.models.user import UserLogin, UserBase
+from app.models.user import UserLogin, UserBase, ChangePassword
 from app.controllers.auth_controller import AuthController
 from app.utils.logger import get_logger
 
@@ -69,3 +69,23 @@ async def login(login_data: UserLogin) -> JSONResponse:
             status_code=500,
             content={"error": "Login failed", "log": str(e)}
         )
+
+
+@router.post("/change-password")
+async def change_password(password_data: ChangePassword) -> JSONResponse:
+    """
+    Change a user's password when email and current password match.
+
+    Args:
+        password_data: Contains `email`, `current_password`, and `new_password`.
+
+    Returns:
+        JSONResponse with operation result.
+    """
+    try:
+        response = await AuthController.change_password(password_data)
+        return response
+    except Exception as e:
+        logger.error("Unexpected error in change-password endpoint: %s", str(e))
+        return JSONResponse(
+            status_code=500, content={"error": "Password change failed", "details": str(e)})
