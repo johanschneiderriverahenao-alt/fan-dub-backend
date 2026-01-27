@@ -85,7 +85,27 @@ class OptimizedDatabaseManager:
 _db_manager = OptimizedDatabaseManager()
 
 client = _db_manager.client
-database = client["fan_dub_db"]
+
+
+class DatabaseProxy:
+    """Proxy wrapper providing both `get_db()` and collection access.
+
+    This keeps compatibility with modules that either use
+    `database.get_db()` or `database["collection"]`.
+    """
+
+    def __init__(self, client: AsyncIOMotorClient, db_name: str):
+        self._client = client
+        self._db_name = db_name
+
+    def get_db(self):
+        return self._client[self._db_name]
+
+    def __getitem__(self, name: str):
+        return self.get_db()[name]
+
+
+database = DatabaseProxy(client, "fan_dub_db")
 
 
 def get_users_collection() -> AsyncIOMotorCollection:
@@ -123,6 +143,8 @@ def get_db():
     Raises:
         RuntimeError: If database is not initialized.
     """
+    # Return the raw Motor database instance. Keep compatibility
+    # with code that expects a `get_db()` method returning the DB.
     if database is None:
         raise RuntimeError("Database not initialized. Run connect_db() first.")
-    return database
+    return database.get_db()
