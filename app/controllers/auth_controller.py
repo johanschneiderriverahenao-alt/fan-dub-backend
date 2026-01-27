@@ -238,7 +238,6 @@ class AuthController:
                     detail="Missing authorization header"
                 )
 
-            # Support 'Bearer <token>' or raw token in header
             if authorization.lower().startswith("bearer "):
                 token = authorization.split(" ", 1)[1]
             else:

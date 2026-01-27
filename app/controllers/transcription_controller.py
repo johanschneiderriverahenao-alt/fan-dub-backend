@@ -23,7 +23,7 @@ from app.utils.logger import get_logger, log_info, log_error
 
 logger = get_logger(__name__)
 
-# Fixed API key and model for testing as requested
+
 open_ai_transcription = os.getenv("OPENAI_API_KEY")
 _OPENAI_MODEL = "gpt-4o-transcribe"
 
