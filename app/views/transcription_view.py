@@ -10,10 +10,12 @@ Endpoints:
 
 from fastapi import APIRouter, Depends, UploadFile, Form, Body
 from fastapi.responses import JSONResponse
+from bson.errors import InvalidId
+from pymongo.errors import PyMongoError
 
 from app.controllers.transcription_controller import TranscriptionController
 from app.controllers.auth_controller import AuthController
-from app.utils.logger import get_logger, log_info
+from app.utils.logger import get_logger, log_info, log_error
 
 logger = get_logger(__name__)
 
@@ -29,10 +31,16 @@ async def create_transcription(
 ) -> JSONResponse:
     """Create a transcription from uploaded audio.
 
-    Requires authentication. Accepts multipart form: `audio_file`, `movie_name`, `duration`.
+    Accepts multipart form: `audio_file`, `movie_name`, `duration`.
+    Returns the created transcription document.
     """
-    log_info(logger, f"Received request to transcribe movie {movie_name}")
-    return await TranscriptionController.create_transcription(audio_file, movie_name, duration)
+    try:
+        log_info(logger, f"Received request to transcribe movie {movie_name}")
+        return await TranscriptionController.create_transcription(audio_file, movie_name, duration)
+    except (RuntimeError, OSError, PyMongoError) as e:
+        log_info(logger, "create_transcription endpoint error", {"error": str(e)})
+        return JSONResponse(
+            status_code=500, content={"detail": "Failed to create transcription", "error": str(e)})
 
 
 @router.put("/transcriptions/{transcription_id}", response_class=JSONResponse)
@@ -45,8 +53,13 @@ async def update_transcription(
 
     Body may include: `movie_name`, `transcription`, `duration`.
     """
-    log_info(logger, f"Update request for transcription {transcription_id}")
-    return await TranscriptionController.edit_transcription(transcription_id, updates)
+    try:
+        log_info(logger, f"Update request for transcription {transcription_id}")
+        return await TranscriptionController.edit_transcription(transcription_id, updates)
+    except (InvalidId, RuntimeError, OSError, PyMongoError) as e:
+        log_error(logger, "update_transcription endpoint error", {"error": str(e)})
+        return JSONResponse(
+            status_code=500, content={"detail": "Failed to update transcription", "error": str(e)})
 
 
 @router.get("/transcriptions/{transcription_id}", response_class=JSONResponse)
@@ -54,8 +67,14 @@ async def get_transcription(
     transcription_id: str,
     _: dict = Depends(AuthController.get_current_user)
 ) -> JSONResponse:
-    log_info(logger, f"Fetch transcription {transcription_id}")
-    return await TranscriptionController.get_transcription(transcription_id)
+    """Retrieve a transcription by its ObjectId `_id`."""
+    try:
+        log_info(logger, f"Fetch transcription {transcription_id}")
+        return await TranscriptionController.get_transcription(transcription_id)
+    except (InvalidId, RuntimeError, OSError, PyMongoError) as e:
+        log_error(logger, "get_transcription endpoint error", {"error": str(e)})
+        return JSONResponse(
+            status_code=500, content={"detail": "Failed to fetch transcription", "error": str(e)})
 
 
 @router.delete("/transcriptions/{transcription_id}", response_class=JSONResponse)
@@ -63,5 +82,11 @@ async def delete_transcription(
     transcription_id: str,
     _: dict = Depends(AuthController.get_current_user)
 ) -> JSONResponse:
-    log_info(logger, f"Delete transcription {transcription_id}")
-    return await TranscriptionController.delete_transcription(transcription_id)
+    """Delete a transcription by its ObjectId `_id`."""
+    try:
+        log_info(logger, f"Delete transcription {transcription_id}")
+        return await TranscriptionController.delete_transcription(transcription_id)
+    except (InvalidId, RuntimeError, OSError, PyMongoError) as e:
+        log_error(logger, "delete_transcription endpoint error", {"error": str(e)})
+        return JSONResponse(
+            status_code=500, content={"detail": "Failed to delete transcription", "error": str(e)})

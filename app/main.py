@@ -35,6 +35,7 @@ app.include_router(auth_views.router, prefix="/auth", tags=["authentication"])
 app.include_router(audit_log_views.router, prefix="/audit", tags=["audit_logs"])
 app.include_router(transcription_view.router, tags=["transcriptions"])
 
+
 app.add_middleware(SessionMiddleware,
                    secret_key=os.getenv("SECRET_KEY", "your-secret-key"))
 
@@ -112,4 +113,4 @@ async def health_check() -> dict:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

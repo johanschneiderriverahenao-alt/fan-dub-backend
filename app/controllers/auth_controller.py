@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 import bcrypt
 from jose import JWTError, jwt
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Header
 from fastapi.responses import JSONResponse
 from bson import ObjectId
 
@@ -217,20 +217,33 @@ class AuthController:
             )
 
     @staticmethod
-    async def get_current_user(token: str) -> Dict[str, Any]:
+    async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
         """
-        Get current user from token.
+        Get current user from the `Authorization` header.
 
         Args:
-            token: JWT token.
+            authorization: Authorization header value, e.g. 'Bearer <token>'.
 
         Returns:
             User data dictionary.
 
         Raises:
-            HTTPException if token is invalid or user not found.
+            HTTPException if token is missing, invalid, or user not found.
         """
         try:
+            if not authorization:
+                log_error(logger, "Missing authorization header", {})
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Missing authorization header"
+                )
+
+            # Support 'Bearer <token>' or raw token in header
+            if authorization.lower().startswith("bearer "):
+                token = authorization.split(" ", 1)[1]
+            else:
+                token = authorization
+
             user_id = AuthController.verify_token(token)
             user = await database["users"].find_one({"_id": ObjectId(user_id)})
             if not user:
