@@ -396,15 +396,7 @@ class AuthController:
             log_error(logger, "Password validation failed: equals email", {"email": email})
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="La contraseña no puede ser igual al correo")
-        common_passwords = {
-            "123456", "1234567", "12345678", "12345", "123456789", "1234",
-            "1234567890", "111111", "123123", "password", "password1", "qwerty", "admin",
-            "iloveyou"
-        }
-        if password.lower() in common_passwords:
-            log_error(logger, "Password validation failed: common password", {})
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="La contraseña es demasiado común")
+
         if not re.search(r"[A-Z]", password):
             log_error(logger, "Password validation failed: missing uppercase", {})
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
