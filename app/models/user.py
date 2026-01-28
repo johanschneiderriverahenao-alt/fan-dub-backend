@@ -73,6 +73,7 @@ class UserResponse(BaseModel):
 
     id: str = Field(alias="_id")
     email: EmailStr
+    role: str = Field(default="user")
     created_at: str
 
 
@@ -87,4 +88,5 @@ class UserInDB(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")
     email: EmailStr
     password_hash: str
+    role: str = Field(default="user")
     created_at: datetime

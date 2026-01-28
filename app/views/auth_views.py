@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from app.models.user import UserLogin, UserBase, ChangePassword
 from app.controllers.auth_controller import AuthController
 from app.utils.logger import get_logger
-from app.utils.dependencies import get_current_user_from_token
+from app.utils.dependencies import get_current_user_from_token, get_current_admin
 
 logger = get_logger(__name__)
 
@@ -173,4 +173,41 @@ async def delete_current_user(
         return JSONResponse(
             status_code=500,
             content={"message": "User deletion failed", "details": str(e)}
+        )
+
+
+@router.put("/update-role")
+async def update_user_role(
+    user_email: str,
+    new_role: str,
+    _: Dict[str, Any] = Depends(get_current_admin)
+) -> JSONResponse:
+    """
+    Update a user's role (Admin only).
+
+    Args:
+        user_email: Email of the user to update.
+        new_role: New role (user or admin).
+
+    Returns:
+        JSONResponse with update confirmation.
+
+    Status Codes:
+        - 200: Role updated successfully.
+        - 400: Invalid role value.
+        - 403: Insufficient permissions.
+        - 404: User not found.
+        - 500: Unexpected server error.
+    """
+    try:
+        response = await AuthController.update_user_role(user_email, new_role)
+        return response
+    except HTTPException as he:
+        logger.error("Validation error in update role endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
+    except Exception as e:
+        logger.error("Unexpected error in update role endpoint: %s", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"message": "Role update failed", "details": str(e)}
         )

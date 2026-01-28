@@ -335,6 +335,7 @@ class AuthController:
             new_user = {
                 "email": email_norm,
                 "password_hash": hashed_password,
+                "role": "user",
                 "created_at": datetime.utcnow()
             }
 
@@ -612,4 +613,57 @@ class AuthController:
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={"error": "User deletion failed", "details": str(e)}
+            )
+
+    @staticmethod
+    async def update_user_role(user_email: str, new_role: str) -> JSONResponse:
+        """
+        Update user role (admin only operation).
+
+        Args:
+            user_email: Email of user to update.
+            new_role: New role (user or admin).
+
+        Returns:
+            JSONResponse with updated user data.
+
+        Raises:
+            HTTPException if user not found or update fails.
+        """
+        try:
+            if new_role not in ["user", "admin"]:
+                return JSONResponse(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content={"error": "Invalid role. Must be 'user' or 'admin'"}
+                )
+
+            email_norm = user_email.lower()
+
+            result = await database["users"].update_one(
+                {"email": email_norm},
+                {"$set": {"role": new_role}}
+            )
+
+            if result.matched_count == 0:
+                return JSONResponse(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    content={"error": "User not found"}
+                )
+
+            log_info(logger, f"User {user_email} role updated to {new_role}")
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "message": f"User role updated to {new_role}",
+                    "email": user_email,
+                    "role": new_role
+                }
+            )
+
+        except Exception as e:
+            log_error(logger, "Error updating user role", {"error": str(e)})
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": "Failed to update user role", "details": str(e)}
             )
