@@ -364,6 +364,13 @@ class AuthController:
                 }
             )
 
+        except HTTPException as http_exc:
+            log_error(logger, "Validation error during registration",
+                      {"detail": http_exc.detail, "status_code": http_exc.status_code})
+            return JSONResponse(
+                status_code=http_exc.status_code,
+                content={"message": "Registration failed", "details": http_exc.detail}
+            )
         except Exception as e:
             log_error(logger, "Unexpected error during registration", {"error": str(e)})
             return JSONResponse(
