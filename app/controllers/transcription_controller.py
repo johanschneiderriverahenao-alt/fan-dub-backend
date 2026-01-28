@@ -71,7 +71,6 @@ class TranscriptionController:
         if duration is None:
             return JSONResponse(status_code=400, content={"detail": "duration is required"})
 
-        # Validate the uploaded file exists and is an .mp3
         filename = (audio_file.filename or "").strip()
         if not filename:
             return JSONResponse(status_code=400, content={"detail": "audio_file is required"})

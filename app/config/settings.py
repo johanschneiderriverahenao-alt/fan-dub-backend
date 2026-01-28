@@ -24,10 +24,8 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
-    # Use a simple string and parse it in a property
     cors_origins_str: str = "http://localhost:3000,http://localhost:8000"
 
-    # Optional Cloudinary settings
     cloudinary_cloud_name: str = ""
     cloudinary_api_key: str = ""
     cloudinary_api_secret: str = ""

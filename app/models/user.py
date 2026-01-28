@@ -5,34 +5,62 @@ User model for authentication.
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
 
 
 class UserBase(BaseModel):
-    """Base user model with common fields."""
+    """Base user model with common fields.
+
+    Simple validations only: type checks and length constraints.
+    Email is normalized to lowercase here.
+    """
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         populate_by_name=True,
     )
 
-    email: EmailStr
+    email: EmailStr = Field(..., max_length=254)
     password: str = Field(..., min_length=8, max_length=72)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalize_email(cls, v):
+        if isinstance(v, str):
+            return v.lower()
+        return v
 
 
 class UserLogin(BaseModel):
-    """User login request model."""
+    """User login request model.
 
-    email: EmailStr
+    Normalizes email to lowercase.
+    """
+
+    email: EmailStr = Field(..., max_length=254)
     password: str
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalize_email(cls, v):
+        if isinstance(v, str):
+            return v.lower()
+        return v
 
 
 class ChangePassword(BaseModel):
     """Model for password change requests using email and current password."""
 
-    email: EmailStr
+    email: EmailStr = Field(..., max_length=254)
     current_password: str = Field(..., min_length=1)
     new_password: str = Field(..., min_length=8, max_length=72)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalize_email(cls, v):
+        if isinstance(v, str):
+            return v.lower()
+        return v
 
 
 class UserResponse(BaseModel):
