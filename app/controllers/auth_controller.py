@@ -5,6 +5,7 @@ Authentication controller for user login and token management.
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
+import re
 import bcrypt
 from jose import JWTError, jwt
 from fastapi import HTTPException, status, Header
@@ -150,7 +151,10 @@ class AuthController:
             HTTPException if credentials are invalid.
         """
         try:
-            user = await database["users"].find_one({"email": login_data.email})
+            email_norm = AuthController._validate_and_normalize_email(
+                getattr(login_data, "email", None))
+
+            user = await database["users"].find_one({"email": email_norm})
 
             if not user or not AuthController.verify_password(
                 login_data.password,
@@ -213,8 +217,41 @@ class AuthController:
             log_error(logger, "Unexpected error during login", {"error": str(e)})
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"error": "Login failed", "log": str(e)}
+                content={"message": "Login failed", "log": str(e)}
             )
+
+    @staticmethod
+    def _validate_and_normalize_email(email: Optional[str]) -> str:
+        """Normalize and validate email for basic rules.
+
+        Raises HTTPException with exact messages on validation failures.
+        """
+        if not email or (isinstance(email, str) and email.strip() == ""):
+            log_error(logger, "Email validation failed: missing email", {})
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="El correo es obligatorio")
+
+        if isinstance(email, str) and " " in email:
+            log_error(logger, "Email validation failed: contains spaces", {"email": email})
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El correo no debe contener espacios")
+
+        email_norm = email.lower()
+
+        if len(email_norm) > 254:
+            log_error(logger, "Email validation failed: too long", {"email": email_norm})
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="El correo es demasiado largo")
+
+        email_regex = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+        if not email_regex.match(email_norm):
+            log_error(logger, "Email validation failed: invalid format", {"email": email_norm})
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ingresa un correo electrónico válido")
+
+        return email_norm
 
     @staticmethod
     async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
@@ -279,18 +316,24 @@ class AuthController:
             HTTPException if email already exists or registration fails.
         """
         try:
-            existing_user = await database["users"].find_one({"email": user_data.email})
+            email_norm = AuthController._validate_and_normalize_email(
+                getattr(user_data, "email", None))
+
+            AuthController._validate_password_for_registration(
+                getattr(user_data, "password", None), email_norm)
+
+            existing_user = await database["users"].find_one({"email": email_norm})
             if existing_user:
-                log_info(logger, f"Registration attempt with existing email: {user_data.email}")
+                log_info(logger, f"Registration attempt with existing email: {email_norm}")
                 return JSONResponse(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    content={"error": "Email already registered"}
+                    content={"message": "Email already registered"}
                 )
 
             hashed_password = AuthController.hash_password(user_data.password)
 
             new_user = {
-                "email": user_data.email,
+                "email": email_norm,
                 "password_hash": hashed_password,
                 "created_at": datetime.utcnow()
             }
@@ -325,8 +368,70 @@ class AuthController:
             log_error(logger, "Unexpected error during registration", {"error": str(e)})
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"error": "Registration failed", "details": str(e)}
+                content={"message": "Registration failed", "details": str(e)}
             )
+
+    @staticmethod
+    def _validate_password_for_registration(password: Optional[str], email: str) -> None:
+        """Validate password according to the complex business rules for registration.
+
+        Raises HTTPException with exact messages when validation fails.
+        """
+        if not password or (isinstance(password, str) and password == ""):
+            log_error(logger, "Password validation failed: missing password", {})
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="La contraseña es obligatoria")
+
+        if len(password) < 8:
+            log_error(logger, "Password validation failed: too short", {})
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Debe tener al menos 8 caracteres")
+
+        if " " in password:
+            log_error(logger, "Password validation failed: contains spaces", {})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="La contraseña no puede contener espacios")
+
+        if password.lower() == (email or "").lower():
+            log_error(logger, "Password validation failed: equals email", {"email": email})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="La contraseña no puede ser igual al correo")
+        common_passwords = {
+            "123456", "1234567", "12345678", "12345", "123456789", "1234",
+            "1234567890", "111111", "123123", "password", "password1", "qwerty", "admin",
+            "iloveyou"
+        }
+        if password.lower() in common_passwords:
+            log_error(logger, "Password validation failed: common password", {})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="La contraseña es demasiado común")
+        if not re.search(r"[A-Z]", password):
+            log_error(logger, "Password validation failed: missing uppercase", {})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Debe incluir al menos una letra mayúscula")
+
+        if not re.search(r"[a-z]", password):
+            log_error(logger, "Password validation failed: missing lowercase", {})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Debe incluir al menos una letra minúscula")
+
+        if not re.search(r"[0-9]", password):
+            log_error(logger, "Password validation failed: missing number", {})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Debe incluir al menos un número")
+
+        allowed_specials = "!@#$%^&*()_+-=[]{}|;:'\",.<>?/\\"
+        special_class = re.escape(allowed_specials)
+        if not re.search(r"[" + special_class + r"]", password):
+            log_error(logger, "Password validation failed: missing special char", {})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Debe incluir al menos un carácter especial")
+
+        allowed_pattern = r"^[A-Za-z0-9" + special_class + r"]+$"
+        if not re.match(allowed_pattern, password):
+            log_error(logger, "Password validation failed: invalid characters", {})
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="La contraseña contiene caracteres no permitidos")
 
     @staticmethod
     async def change_password(password_data: ChangePassword) -> JSONResponse:

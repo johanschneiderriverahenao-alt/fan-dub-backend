@@ -4,7 +4,7 @@ Authentication views for user login operations.
 # pylint: disable=R0801,W0718
 
 from typing import Dict, Any
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
 from app.models.user import UserLogin, UserBase, ChangePassword
@@ -37,11 +37,14 @@ async def register(user_data: UserBase) -> JSONResponse:
     try:
         response = await AuthController.register(user_data)
         return response
+    except HTTPException as he:
+        logger.error("Validation error in register endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
     except Exception as e:
         logger.error("Unexpected error in register endpoint: %s", str(e))
         return JSONResponse(
             status_code=500,
-            content={"error": "Registration failed", "details": str(e)}
+            content={"message": "Registration failed", "details": str(e)}
         )
 
 
@@ -65,11 +68,14 @@ async def login(login_data: UserLogin) -> JSONResponse:
     try:
         response = await AuthController.login(login_data)
         return response
+    except HTTPException as he:
+        logger.error("Validation error in login endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
     except Exception as e:
         logger.error("Unexpected error in login endpoint: %s", str(e))
         return JSONResponse(
             status_code=500,
-            content={"error": "Login failed", "log": str(e)}
+            content={"message": "Login failed", "log": str(e)}
         )
 
 
@@ -87,10 +93,13 @@ async def change_password(password_data: ChangePassword) -> JSONResponse:
     try:
         response = await AuthController.change_password(password_data)
         return response
+    except HTTPException as he:
+        logger.error("Validation error in change-password endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
     except Exception as e:
         logger.error("Unexpected error in change-password endpoint: %s", str(e))
         return JSONResponse(
-            status_code=500, content={"error": "Password change failed", "details": str(e)})
+            status_code=500, content={"message": "Password change failed", "details": str(e)})
 
 
 @router.get("/me")
@@ -117,11 +126,14 @@ async def get_current_user_profile(
         user_id = current_user.get("id")
         response = await AuthController.get_user_profile(user_id)
         return response
+    except HTTPException as he:
+        logger.error("Validation error in get profile endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
     except Exception as e:
         logger.error("Unexpected error in get profile endpoint: %s", str(e))
         return JSONResponse(
             status_code=500,
-            content={"error": "Failed to retrieve profile", "details": str(e)}
+            content={"message": "Failed to retrieve profile", "details": str(e)}
         )
 
 
@@ -153,9 +165,12 @@ async def delete_current_user(
         user_id = current_user.get("id")
         response = await AuthController.delete_user(user_id)
         return response
+    except HTTPException as he:
+        logger.error("Validation error in delete user endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
     except Exception as e:
         logger.error("Unexpected error in delete user endpoint: %s", str(e))
         return JSONResponse(
             status_code=500,
-            content={"error": "User deletion failed", "details": str(e)}
+            content={"message": "User deletion failed", "details": str(e)}
         )
