@@ -98,6 +98,21 @@ def get_audit_logs_collection() -> AsyncIOMotorCollection:
     return database["audit_logs"]
 
 
+def get_companies_collection() -> AsyncIOMotorCollection:
+    """Get companies collection."""
+    return database["companies"]
+
+
+def get_sagas_collection() -> AsyncIOMotorCollection:
+    """Get sagas collection."""
+    return database["sagas"]
+
+
+def get_movies_collection() -> AsyncIOMotorCollection:
+    """Get movies collection."""
+    return database["movies"]
+
+
 async def connect_db() -> None:
     """
     Connect to MongoDB.

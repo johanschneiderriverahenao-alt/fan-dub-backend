@@ -2,7 +2,7 @@
 Dependency functions for FastAPI routes.
 """
 from typing import Dict, Any
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, status, Depends
 
 from app.controllers.auth_controller import AuthController
 from app.utils.logger import get_logger
@@ -50,3 +50,32 @@ async def get_current_user_from_token(
 
     user = await AuthController.get_current_user(token)
     return user
+
+
+async def get_current_admin(
+    current_user: Dict[str, Any] = Depends(AuthController.get_current_user)
+) -> Dict[str, Any]:
+    """
+    Verify that the current user has admin role.
+
+    Args:
+        current_user: Current user data from token.
+
+    Returns:
+        User data dictionary if user is admin.
+
+    Raises:
+        HTTPException if user is not admin.
+    """
+    user_role = current_user.get("role", "user")
+
+    if user_role != "admin":
+        logger.warning("Access denied for user %s - insufficient permissions",
+                       current_user.get('email'))
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions. Admin role required."
+        )
+
+    logger.info("Admin access granted for user %s", current_user.get('email'))
+    return current_user

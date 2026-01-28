@@ -1,12 +1,15 @@
 {
   "info": {
-    "name": "Fan Dub Backend - Authentication API",
-    "description": "Complete authentication flow: Register → Login → Get Profile → Change Password → Delete",
+    "name": "Fan Dub Backend - Complete API",
+    "description": "Complete API flow: Authentication, Companies, Sagas, and Movies",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "1. Register User",
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "1. Register User",
       "event": [
         {
           "listen": "prerequest",
@@ -254,6 +257,919 @@
       },
       "response": []
     }
+      ]
+    },
+    {
+      "name": "Companies",
+      "item": [
+        {
+          "name": "6. Create Company",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201', function() {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response has company data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('companie_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('sagas_list');",
+              "    pm.expect(jsonData).to.have.property('timestamp');",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "pm.environment.set('companyId', jsonData._id);",
+              "console.log('Company ID saved:', jsonData._id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"companie_name\": \"Marvel Studios\",\n  \"description\": \"Leading entertainment company producing superhero films\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/companies/",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "companies",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "7. Get All Companies",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has data and pagination', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('data');",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('page');",
+              "    pm.expect(jsonData.pagination).to.have.property('page_size');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_items');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_pages');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/companies/?page=1&page_size=10",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "companies",
+            ""
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "page_size",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "8. Get Company by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has company data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('companie_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('sagas_list');",
+              "    pm.expect(jsonData).to.have.property('timestamp');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/companies/{{companyId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "companies",
+            "{{companyId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "9. Update Company",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has updated company data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('companie_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"Updated description for Marvel Studios\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/companies/{{companyId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "companies",
+            "{{companyId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+      ]
+    },
+    {
+      "name": "Sagas",
+      "item": [
+        {
+          "name": "10. Create Saga",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201', function() {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response has saga data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('saga_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('company_id');",
+              "    pm.expect(jsonData).to.have.property('movies_list');",
+              "    pm.expect(jsonData).to.have.property('timestamp');",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "pm.environment.set('sagaId', jsonData._id);",
+              "console.log('Saga ID saved:', jsonData._id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"saga_name\": \"The Avengers Saga\",\n  \"description\": \"Epic superhero team saga\",\n  \"company_id\": \"{{companyId}}\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/sagas/",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "sagas",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "11. Get All Sagas",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has data and pagination', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('data');",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('page');",
+              "    pm.expect(jsonData.pagination).to.have.property('page_size');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_items');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_pages');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/sagas/?page=1&page_size=10",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "sagas",
+            ""
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "page_size",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "12. Get Saga by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has saga data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('saga_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('company_id');",
+              "    pm.expect(jsonData).to.have.property('movies_list');",
+              "    pm.expect(jsonData).to.have.property('timestamp');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/sagas/{{sagaId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "sagas",
+            "{{sagaId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "13. Get Sagas by Company",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has data and pagination', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('data');",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('page');",
+              "    pm.expect(jsonData.pagination).to.have.property('page_size');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_items');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_pages');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/sagas/company/{{companyId}}?page=1&page_size=10",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "sagas",
+            "company",
+            "{{companyId}}"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "page_size",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "14. Update Saga",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has updated saga data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('saga_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"Updated description for The Avengers Saga\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/sagas/{{sagaId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "sagas",
+            "{{sagaId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+      ]
+    },
+    {
+      "name": "Movies",
+      "item": [
+        {
+          "name": "15. Create Movie",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201', function() {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response has movie data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('movie_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('saga_id');",
+              "    pm.expect(jsonData).to.have.property('characters_available');",
+              "    pm.expect(jsonData).to.have.property('timestamp');",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "pm.environment.set('movieId', jsonData._id);",
+              "console.log('Movie ID saved:', jsonData._id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"movie_name\": \"Avengers: Endgame\",\n  \"description\": \"Epic conclusion to the Infinity Saga\",\n  \"saga_id\": \"{{sagaId}}\",\n  \"characters_available\": [\"Iron Man\", \"Captain America\", \"Thor\", \"Hulk\", \"Black Widow\", \"Hawkeye\"]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/movies/",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "movies",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "16. Get All Movies",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has data and pagination', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('data');",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('page');",
+              "    pm.expect(jsonData.pagination).to.have.property('page_size');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_items');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_pages');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/movies/?page=1&page_size=10",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "movies",
+            ""
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "page_size",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "17. Get Movie by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has movie data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('movie_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('saga_id');",
+              "    pm.expect(jsonData).to.have.property('characters_available');",
+              "    pm.expect(jsonData).to.have.property('timestamp');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/movies/{{movieId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "movies",
+            "{{movieId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "18. Get Movies by Saga",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has data and pagination', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('data');",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('page');",
+              "    pm.expect(jsonData.pagination).to.have.property('page_size');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_items');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_pages');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/movies/saga/{{sagaId}}?page=1&page_size=10",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "movies",
+            "saga",
+            "{{sagaId}}"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "page_size",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "19. Update Movie",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has updated movie data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('movie_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"Updated description for Avengers: Endgame\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/movies/{{movieId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "movies",
+            "{{movieId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "20. Delete Movie",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Movie deleted successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('detail');",
+              "    pm.expect(jsonData).to.have.property('movie_id');",
+              "    pm.expect(jsonData.detail).to.include('deleted successfully');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/movies/{{movieId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "movies",
+            "{{movieId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "21. Delete Saga",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Saga deleted successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('detail');",
+              "    pm.expect(jsonData).to.have.property('saga_id');",
+              "    pm.expect(jsonData.detail).to.include('deleted successfully');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/sagas/{{sagaId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "sagas",
+            "{{sagaId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "22. Delete Company",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Company deleted successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('detail');",
+              "    pm.expect(jsonData).to.have.property('company_id');",
+              "    pm.expect(jsonData.detail).to.include('deleted successfully');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/companies/{{companyId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "companies",
+            "{{companyId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+      ]
+    }
   ],
   "variable": [
     {
@@ -263,6 +1179,21 @@
     },
     {
       "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "companyId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sagaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "movieId",
       "value": "",
       "type": "string"
     }
