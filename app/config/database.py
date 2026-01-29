@@ -113,6 +113,11 @@ def get_movies_collection() -> AsyncIOMotorCollection:
     return database["movies"]
 
 
+def get_clips_scenes_collection() -> AsyncIOMotorCollection:
+    """Get clips_scenes collection."""
+    return database["clips_scenes"]
+
+
 async def connect_db() -> None:
     """
     Connect to MongoDB.
