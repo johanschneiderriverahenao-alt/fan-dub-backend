@@ -3,6 +3,7 @@ Movie controller: business logic for creating, retrieving,
 updating and deleting movies. Stores documents in MongoDB.
 """
 # pylint: disable=W0718,R0801
+# flake8: noqa: C901
 from datetime import datetime
 from math import ceil
 
