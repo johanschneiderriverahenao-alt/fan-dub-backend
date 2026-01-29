@@ -7,7 +7,7 @@ from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
-from app.models.user import UserLogin, UserBase, ChangePassword
+from app.models.user import UserLogin, UserBase, ChangePassword, ChangeEmail
 from app.controllers.auth_controller import AuthController
 from app.utils.logger import get_logger
 from app.utils.dependencies import get_current_user_from_token, get_current_admin
@@ -100,6 +100,29 @@ async def change_password(password_data: ChangePassword) -> JSONResponse:
         logger.error("Unexpected error in change-password endpoint: %s", str(e))
         return JSONResponse(
             status_code=500, content={"message": "Password change failed", "details": str(e)})
+
+
+@router.post("/change-email")
+async def change_email(email_data: ChangeEmail) -> JSONResponse:
+    """
+    Change a user's email address.
+
+    Args:
+        email_data: Contains `email`, `new_email`, and `current_password`.
+
+    Returns:
+        JSONResponse with operation result.
+    """
+    try:
+        response = await AuthController.change_email(email_data)
+        return response
+    except HTTPException as he:
+        logger.error("Validation error in change-email endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
+    except Exception as e:
+        logger.error("Unexpected error in change-email endpoint: %s", str(e))
+        return JSONResponse(status_code=500, content={"message": "Email change failed",
+                                                      "details": str(e)})
 
 
 @router.get("/me")
