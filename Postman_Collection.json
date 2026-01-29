@@ -1084,7 +1084,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"scene_name\": \"Final Battle Scene\",\n  \"description\": \"Epic final battle against Thanos\",\n  \"movie_id\": \"{{movieId}}\",\n  \"characters\": [\"Iron Man\", \"Captain America\", \"Thor\", \"Thanos\"],\n  \"image_url\": \"https://images.unsplash.com/photo-1635805737707-575885ab0820?w=800\",\n  \"video_url\": \"https://example.com/videos/final-battle.mp4\",\n  \"transcription\": \"And I... am... Iron Man.\"\n}"
+          "raw": "{\n  \"scene_name\": \"Final Battle Scene\",\n  \"description\": \"Epic final battle against Thanos\",\n  \"movie_id\": \"{{movieId}}\",\n  \"characters\": [\n    {\n      \"name\": \"Iron Man\",\n      \"normal_image\": \"https://images.unsplash.com/photo-1635805737707-575885ab0820?w=400\",\n      \"selected_image\": \"https://images.unsplash.com/photo-1635805737707-575885ab0820?w=400&sat=2\"\n    },\n    {\n      \"name\": \"Thanos\",\n      \"normal_image\": \"https://images.unsplash.com/photo-1611604548018-d56bbd85d681?w=400\",\n      \"selected_image\": \"https://images.unsplash.com/photo-1611604548018-d56bbd85d681?w=400&sat=2\"\n    }\n  ],\n  \"image_url\": \"https://images.unsplash.com/photo-1635805737707-575885ab0820?w=800\",\n  \"transcription\": \"And I... am... Iron Man.\"\n}"
         },
         "url": {
           "raw": "http://localhost:8000/clips-scenes/",
@@ -1250,6 +1250,109 @@
           "path": [
             "clips-scenes",
             "{{clipSceneId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "21b. Upload Video to ClipScene",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Video uploaded successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData).to.have.property('clip_scene');",
+              "    pm.expect(jsonData).to.have.property('upload_info');",
+              "    pm.expect(jsonData.clip_scene).to.have.property('video_url');",
+              "    pm.expect(jsonData.upload_info).to.have.property('file_url');",
+              "    console.log('Video URL:', jsonData.clip_scene.video_url);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "video",
+              "type": "file",
+              "src": [],
+              "description": "Select a video file from your computer"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8000/clips-scenes/{{clipSceneId}}/upload-video",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "clips-scenes",
+            "{{clipSceneId}}",
+            "upload-video"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "21c. Delete Video from ClipScene",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Video deleted successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('deleted successfully');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/clips-scenes/{{clipSceneId}}/video",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "clips-scenes",
+            "{{clipSceneId}}",
+            "video"
           ]
         }
       },

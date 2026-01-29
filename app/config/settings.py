@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     cloudinary_api_key: str = ""
     cloudinary_api_secret: str = ""
 
+    r2_access_key_id: str = ""
+    r2_secret_access_key: str = ""
+    r2_endpoint_url: str = ""
+    r2_bucket_name: str = "dub-videos"
+    r2_public_url: str = ""
+
     app_name: str = "Fan Dub Backend"
     app_version: str = "1.0.0"
     debug: bool = False

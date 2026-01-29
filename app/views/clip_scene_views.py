@@ -7,10 +7,12 @@ Endpoints:
  - GET /clips-scenes/movie/{movie_id}         -> get clip scenes by movie (paginated)
  - PUT /clips-scenes/{id}                     -> update clip scene by ID
  - DELETE /clips-scenes/{id}                  -> delete clip scene by ID (admin only)
+ - POST /clips-scenes/{id}/upload-video       -> upload video for clip scene (admin only)
+ - DELETE /clips-scenes/{id}/video            -> delete video from clip scene (admin only)
 """
 # pylint: disable=R0801
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, File, UploadFile
 from fastapi.responses import JSONResponse
 from bson.errors import InvalidId
 from pymongo.errors import PyMongoError
@@ -174,4 +176,83 @@ async def delete_clip_scene(
         return JSONResponse(
             status_code=500,
             content={"detail": "Failed to delete clip scene", "error": str(e)}
+        )
+
+
+@router.post("/clips-scenes/{clip_scene_id}/upload-video", response_class=JSONResponse)
+async def upload_video_to_clip_scene(
+    clip_scene_id: str,
+    video: UploadFile = File(..., description="Video file to upload"),
+    _: dict = Depends(get_current_admin)
+) -> JSONResponse:
+    """
+    Upload a video file to R2 storage for a specific clip scene. Admin only.
+
+    Args:
+        clip_scene_id: The clip scene ID
+        video: Video file to upload (multipart/form-data)
+
+    Returns:
+        JSONResponse with updated clip scene data and video URL
+    """
+    try:
+        log_info(logger, f"Uploading video for clip scene: {clip_scene_id}")
+
+        max_size = 500 * 1024 * 1024
+        video.file.seek(0, 2)
+        file_size = video.file.tell()
+        video.file.seek(0)
+
+        if file_size > max_size:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "detail": (
+                        "File too large. Maximum size is 500MB, "
+                        f"got {file_size / (1024 * 1024):.2f}MB"
+                    )
+                }
+            )
+
+        return await ClipSceneController.upload_video(clip_scene_id, video)
+    except InvalidId:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "Invalid clip scene ID format"}
+        )
+    except (RuntimeError, PyMongoError) as e:
+        log_error(logger, "upload_video endpoint error", {"error": str(e)})
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Failed to upload video", "error": str(e)}
+        )
+
+
+@router.delete("/clips-scenes/{clip_scene_id}/video", response_class=JSONResponse)
+async def delete_video_from_clip_scene(
+    clip_scene_id: str,
+    _: dict = Depends(get_current_admin)
+) -> JSONResponse:
+    """
+    Delete the video file from R2 storage for a specific clip scene. Admin only.
+
+    Args:
+        clip_scene_id: The clip scene ID
+
+    Returns:
+        JSONResponse with deletion confirmation
+    """
+    try:
+        log_info(logger, f"Deleting video for clip scene: {clip_scene_id}")
+        return await ClipSceneController.delete_video(clip_scene_id)
+    except InvalidId:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "Invalid clip scene ID format"}
+        )
+    except (RuntimeError, PyMongoError) as e:
+        log_error(logger, "delete_video endpoint error", {"error": str(e)})
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Failed to delete video", "error": str(e)}
         )

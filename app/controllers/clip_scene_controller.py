@@ -2,17 +2,20 @@
 ClipScene controller: business logic for creating, retrieving,
 updating and deleting clip scenes. Stores documents in MongoDB.
 """
-# pylint: disable=W0718,R0801
+# pylint: disable=W0718,R0801,R0911
+# flake8: noqa: C901
 from datetime import datetime
 from math import ceil
 
 from fastapi.responses import JSONResponse
+from fastapi import UploadFile
 from bson import ObjectId
 from bson.errors import InvalidId
 from pymongo.errors import PyMongoError
 
 from app.config.database import database
 from app.models.clip_scene_model import ClipSceneCreate, ClipSceneUpdate, ClipSceneResponse
+from app.services.r2_storage_service import r2_service
 from app.utils.logger import get_logger, log_info, log_error
 
 logger = get_logger(__name__)
@@ -54,11 +57,13 @@ class ClipSceneController:
                     content={"detail": "Movie not found"}
                 )
 
+            characters_data = [char.model_dump() for char in clip_scene_data.characters]
+
             clip_scene_dict = {
                 "scene_name": clip_scene_data.scene_name,
                 "description": clip_scene_data.description,
                 "movie_id": clip_scene_data.movie_id,
-                "characters": clip_scene_data.characters,
+                "characters": characters_data,
                 "image_url": clip_scene_data.image_url,
                 "video_url": clip_scene_data.video_url,
                 "transcription": clip_scene_data.transcription,
@@ -226,11 +231,14 @@ class ClipSceneController:
         try:
             collection = database["clips_scenes"]
 
-            update_data = {
-                k: v
-                for k, v in updates.model_dump(exclude_unset=True).items()
-                if v is not None
-            }
+            update_data = {}
+            for k, v in updates.model_dump(exclude_unset=True).items():
+                if v is not None:
+                    # Convert Character objects to dicts for MongoDB
+                    if k == "characters" and v:
+                        update_data[k] = [char if isinstance(char, dict) else char for char in v]
+                    else:
+                        update_data[k] = v
 
             if not update_data:
                 return JSONResponse(
@@ -321,4 +329,189 @@ class ClipSceneController:
             return JSONResponse(
                 status_code=500,
                 content={"detail": "Failed to delete clip scene", "error": str(e)}
+            )
+
+    @staticmethod
+    async def upload_video(clip_scene_id: str,
+                           video_file: UploadFile) -> JSONResponse:
+        """
+        Upload a video file to R2 and update the clip scene.
+
+        Args:
+            clip_scene_id: ClipScene ID
+            video_file: Video file to upload
+
+        Returns:
+            JSONResponse with updated clip scene data including video URL
+
+        Raises:
+            InvalidId: If clip_scene_id is not a valid ObjectId
+            RuntimeError: If upload or database operation fails
+        """
+        try:
+            oid = ObjectId(clip_scene_id)
+        except InvalidId:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Invalid clip scene ID format"}
+            )
+
+        try:
+            collection = database["clips_scenes"]
+
+            clip_scene = await collection.find_one({"_id": oid})
+            if not clip_scene:
+                return JSONResponse(
+                    status_code=404,
+                    content={"detail": "Clip scene not found"}
+                )
+
+            if not video_file.content_type.startswith('video/'):
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "File must be a video"}
+                )
+
+            if clip_scene.get("video_url") and clip_scene.get("video_key"):
+                try:
+                    await r2_service.delete_file(clip_scene["video_key"])
+                    log_info(logger, f"Old video deleted: {clip_scene['video_key']}")
+                except Exception as e:
+                    log_error(logger, "Failed to delete old video", {"error": str(e)})
+
+            upload_result = await r2_service.upload_file(
+                file=video_file,
+                folder="clips-scenes",
+                custom_filename=f"{clip_scene_id}_{video_file.filename}"
+            )
+
+            await collection.update_one(
+                {"_id": oid},
+                {
+                    "$set": {
+                        "video_url": upload_result["file_url"],
+                        "video_key": upload_result["file_key"],
+                        "video_filename": upload_result["original_filename"],
+                        "video_content_type": upload_result["content_type"],
+                        "video_size": upload_result["size"],
+                        "video_uploaded_at": datetime.utcnow()
+                    }
+                }
+            )
+
+            updated_clip_scene = await collection.find_one({"_id": oid})
+            response = ClipSceneResponse.from_mongo(updated_clip_scene)
+
+            log_info(logger, f"Video uploaded for clip scene: {clip_scene_id}")
+
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "message": "Video uploaded successfully",
+                    "clip_scene": response.model_dump(by_alias=True),
+                    "upload_info": {
+                        "file_key": upload_result["file_key"],
+                        "file_url": upload_result["file_url"],
+                        "size": upload_result["size"]
+                    }
+                }
+            )
+
+        except RuntimeError as e:
+            log_error(logger, "Upload error", {"error": str(e)})
+            return JSONResponse(
+                status_code=500,
+                content={"detail": str(e)}
+            )
+        except PyMongoError as e:
+            log_error(logger, "Database error during video upload", {"error": str(e)})
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Failed to update clip scene", "error": str(e)}
+            )
+        except Exception as e:
+            log_error(logger, "Unexpected error during video upload", {"error": str(e)})
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Unexpected error occurred", "error": str(e)}
+            )
+
+    @staticmethod
+    async def delete_video(clip_scene_id: str) -> JSONResponse:
+        """
+        Delete the video file from R2 and remove video info from clip scene.
+
+        Args:
+            clip_scene_id: ClipScene ID
+
+        Returns:
+            JSONResponse with confirmation
+
+        Raises:
+            InvalidId: If clip_scene_id is not a valid ObjectId
+        """
+        try:
+            oid = ObjectId(clip_scene_id)
+        except InvalidId:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Invalid clip scene ID format"}
+            )
+
+        try:
+            collection = database["clips_scenes"]
+
+            clip_scene = await collection.find_one({"_id": oid})
+            if not clip_scene:
+                return JSONResponse(
+                    status_code=404,
+                    content={"detail": "Clip scene not found"}
+                )
+
+            if not clip_scene.get("video_key"):
+                return JSONResponse(
+                    status_code=404,
+                    content={"detail": "No video found for this clip scene"}
+                )
+
+            await r2_service.delete_file(clip_scene["video_key"])
+
+            await collection.update_one(
+                {"_id": oid},
+                {
+                    "$unset": {
+                        "video_url": "",
+                        "video_key": "",
+                        "video_filename": "",
+                        "video_content_type": "",
+                        "video_size": "",
+                        "video_uploaded_at": ""
+                    }
+                }
+            )
+
+            log_info(logger, f"Video deleted for clip scene: {clip_scene_id}")
+
+            return JSONResponse(
+                status_code=200,
+                content={"message": "Video deleted successfully"}
+            )
+
+        except RuntimeError as e:
+            log_error(logger, "R2 deletion error", {"error": str(e)})
+            return JSONResponse(
+                status_code=500,
+                content={"detail": str(e)}
+            )
+        except PyMongoError as e:
+            log_error(logger, "Database error during video deletion", {"error": str(e)})
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Failed to update clip scene", "error": str(e)}
+            )
+        except Exception as e:
+            log_error(logger, "Unexpected error during video deletion", {"error": str(e)})
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Unexpected error occurred", "error": str(e)}
             )
