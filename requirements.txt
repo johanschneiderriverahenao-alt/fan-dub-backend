@@ -12,5 +12,6 @@ pymongo
 itsdangerous
 starlette
 cloudinary
+boto3
 flake8
 pylint

@@ -1254,6 +1254,109 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "21b. Upload Video to ClipScene",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Video uploaded successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData).to.have.property('clip_scene');",
+              "    pm.expect(jsonData).to.have.property('upload_info');",
+              "    pm.expect(jsonData.clip_scene).to.have.property('video_url');",
+              "    pm.expect(jsonData.upload_info).to.have.property('file_url');",
+              "    console.log('Video URL:', jsonData.clip_scene.video_url);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "video",
+              "type": "file",
+              "src": [],
+              "description": "Select a video file from your computer"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8000/clips-scenes/{{clipSceneId}}/upload-video",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "clips-scenes",
+            "{{clipSceneId}}",
+            "upload-video"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "21c. Delete Video from ClipScene",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Video deleted successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('deleted successfully');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/clips-scenes/{{clipSceneId}}/video",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "clips-scenes",
+            "{{clipSceneId}}",
+            "video"
+          ]
+        }
+      },
+      "response": []
     }
       ]
     },
