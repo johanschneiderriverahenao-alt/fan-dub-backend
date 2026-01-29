@@ -3,6 +3,7 @@ ClipScene controller: business logic for creating, retrieving,
 updating and deleting clip scenes. Stores documents in MongoDB.
 """
 # pylint: disable=W0718,R0801,R0911
+# flake8: noqa: C901
 from datetime import datetime
 from math import ceil
 
@@ -56,11 +57,13 @@ class ClipSceneController:
                     content={"detail": "Movie not found"}
                 )
 
+            characters_data = [char.model_dump() for char in clip_scene_data.characters]
+
             clip_scene_dict = {
                 "scene_name": clip_scene_data.scene_name,
                 "description": clip_scene_data.description,
                 "movie_id": clip_scene_data.movie_id,
-                "characters": clip_scene_data.characters,
+                "characters": characters_data,
                 "image_url": clip_scene_data.image_url,
                 "video_url": clip_scene_data.video_url,
                 "transcription": clip_scene_data.transcription,
@@ -228,11 +231,14 @@ class ClipSceneController:
         try:
             collection = database["clips_scenes"]
 
-            update_data = {
-                k: v
-                for k, v in updates.model_dump(exclude_unset=True).items()
-                if v is not None
-            }
+            update_data = {}
+            for k, v in updates.model_dump(exclude_unset=True).items():
+                if v is not None:
+                    # Convert Character objects to dicts for MongoDB
+                    if k == "characters" and v:
+                        update_data[k] = [char if isinstance(char, dict) else char for char in v]
+                    else:
+                        update_data[k] = v
 
             if not update_data:
                 return JSONResponse(

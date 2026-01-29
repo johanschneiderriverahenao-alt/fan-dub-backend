@@ -1084,7 +1084,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"scene_name\": \"Final Battle Scene\",\n  \"description\": \"Epic final battle against Thanos\",\n  \"movie_id\": \"{{movieId}}\",\n  \"characters\": [\"Iron Man\", \"Captain America\", \"Thor\", \"Thanos\"],\n  \"image_url\": \"https://images.unsplash.com/photo-1635805737707-575885ab0820?w=800\",\n  \"video_url\": \"https://example.com/videos/final-battle.mp4\",\n  \"transcription\": \"And I... am... Iron Man.\"\n}"
+          "raw": "{\n  \"scene_name\": \"Final Battle Scene\",\n  \"description\": \"Epic final battle against Thanos\",\n  \"movie_id\": \"{{movieId}}\",\n  \"characters\": [\n    {\n      \"name\": \"Iron Man\",\n      \"normal_image\": \"https://images.unsplash.com/photo-1635805737707-575885ab0820?w=400\",\n      \"selected_image\": \"https://images.unsplash.com/photo-1635805737707-575885ab0820?w=400&sat=2\"\n    },\n    {\n      \"name\": \"Thanos\",\n      \"normal_image\": \"https://images.unsplash.com/photo-1611604548018-d56bbd85d681?w=400\",\n      \"selected_image\": \"https://images.unsplash.com/photo-1611604548018-d56bbd85d681?w=400&sat=2\"\n    }\n  ],\n  \"image_url\": \"https://images.unsplash.com/photo-1635805737707-575885ab0820?w=800\",\n  \"transcription\": \"And I... am... Iron Man.\"\n}"
         },
         "url": {
           "raw": "http://localhost:8000/clips-scenes/",

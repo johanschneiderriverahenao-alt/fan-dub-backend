@@ -10,14 +10,22 @@ from bson import ObjectId
 from pydantic import BaseModel, Field, ConfigDict
 
 
+class Character(BaseModel):
+    """Model for a character in a scene."""
+
+    name: str = Field(..., description="Name of the character")
+    normal_image: str = Field(..., description="URL of character image in normal state")
+    selected_image: str = Field(..., description="URL of character image when selected/hovered")
+
+
 class ClipSceneBase(BaseModel):
     """Base model with common fields."""
 
     scene_name: str = Field(..., description="Name of the scene")
     description: str = Field(..., description="Description of the scene")
     movie_id: str = Field(..., description="ID of the movie this scene belongs to")
-    characters: List[str] = Field(default_factory=list,
-                                  description="List of characters in the scene")
+    characters: List[Character] = Field(default_factory=list,
+                                        description="List of characters in the scene")
     image_url: Optional[str] = Field(None, description="URL of the scene thumbnail image")
     video_url: Optional[str] = Field(None, description="URL of the scene video")
     transcription: Optional[str] = Field(None, description="Transcription of the scene dialogue")
@@ -33,7 +41,7 @@ class ClipSceneUpdate(BaseModel):
     scene_name: Optional[str] = None
     description: Optional[str] = None
     movie_id: Optional[str] = None
-    characters: Optional[List[str]] = None
+    characters: Optional[List[Character]] = None
     image_url: Optional[str] = None
     video_url: Optional[str] = None
     transcription: Optional[str] = None
@@ -57,7 +65,7 @@ class ClipSceneResponse(BaseModel):
     scene_name: str
     description: str
     movie_id: str
-    characters: List[str]
+    characters: List[Character]
     image_url: Optional[str] = None
     video_url: Optional[str] = None
     transcription: Optional[str] = None
