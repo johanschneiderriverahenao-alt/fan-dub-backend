@@ -278,6 +278,7 @@
               "    pm.expect(jsonData).to.have.property('_id');",
               "    pm.expect(jsonData).to.have.property('companie_name');",
               "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('image_url');",
               "    pm.expect(jsonData).to.have.property('sagas_list');",
               "    pm.expect(jsonData).to.have.property('timestamp');",
               "});",
@@ -303,7 +304,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"companie_name\": \"Marvel Studios\",\n  \"description\": \"Leading entertainment company producing superhero films\"\n}"
+          "raw": "{\n  \"companie_name\": \"Marvel Studios\",\n  \"description\": \"Leading entertainment company producing superhero films\",\n  \"image_url\": \"https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800\"\n}"
         },
         "url": {
           "raw": "http://localhost:8000/companies/",
@@ -497,6 +498,7 @@
               "    pm.expect(jsonData).to.have.property('saga_name');",
               "    pm.expect(jsonData).to.have.property('description');",
               "    pm.expect(jsonData).to.have.property('company_id');",
+              "    pm.expect(jsonData).to.have.property('image_url');",
               "    pm.expect(jsonData).to.have.property('movies_list');",
               "    pm.expect(jsonData).to.have.property('timestamp');",
               "});",
@@ -522,7 +524,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"saga_name\": \"The Avengers Saga\",\n  \"description\": \"Epic superhero team saga\",\n  \"company_id\": \"{{companyId}}\"\n}"
+          "raw": "{\n  \"saga_name\": \"The Avengers Saga\",\n  \"description\": \"Epic superhero team saga\",\n  \"company_id\": \"{{companyId}}\",\n  \"image_url\": \"https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800\"\n}"
         },
         "url": {
           "raw": "http://localhost:8000/sagas/",
@@ -775,6 +777,7 @@
               "    pm.expect(jsonData).to.have.property('movie_name');",
               "    pm.expect(jsonData).to.have.property('description');",
               "    pm.expect(jsonData).to.have.property('saga_id');",
+              "    pm.expect(jsonData).to.have.property('image_url');",
               "    pm.expect(jsonData).to.have.property('characters_available');",
               "    pm.expect(jsonData).to.have.property('timestamp');",
               "});",
@@ -800,7 +803,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"movie_name\": \"Avengers: Endgame\",\n  \"description\": \"Epic conclusion to the Infinity Saga\",\n  \"saga_id\": \"{{sagaId}}\",\n  \"characters_available\": [\"Iron Man\", \"Captain America\", \"Thor\", \"Hulk\", \"Black Widow\", \"Hawkeye\"]\n}"
+          "raw": "{\n  \"movie_name\": \"Avengers: Endgame\",\n  \"description\": \"Epic conclusion to the Infinity Saga\",\n  \"saga_id\": \"{{sagaId}}\",\n  \"characters_available\": [\"Iron Man\", \"Captain America\", \"Thor\", \"Hulk\", \"Black Widow\", \"Hawkeye\"],\n  \"image_url\": \"https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800\"\n}"
         },
         "url": {
           "raw": "http://localhost:8000/movies/",
@@ -1034,10 +1037,274 @@
       ]
     },
     {
+      "name": "ClipsScenes",
+      "item": [
+        {
+          "name": "18. Create ClipScene",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 201', function() {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response has clip scene data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('scene_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('movie_id');",
+              "    pm.expect(jsonData).to.have.property('characters');",
+              "    pm.expect(jsonData).to.have.property('image_url');",
+              "    pm.expect(jsonData).to.have.property('video_url');",
+              "    pm.expect(jsonData).to.have.property('transcription');",
+              "    pm.expect(jsonData).to.have.property('timestamp');",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "pm.environment.set('clipSceneId', jsonData._id);",
+              "console.log('ClipScene ID saved:', jsonData._id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"scene_name\": \"Final Battle Scene\",\n  \"description\": \"Epic final battle against Thanos\",\n  \"movie_id\": \"{{movieId}}\",\n  \"characters\": [\"Iron Man\", \"Captain America\", \"Thor\", \"Thanos\"],\n  \"image_url\": \"https://images.unsplash.com/photo-1635805737707-575885ab0820?w=800\",\n  \"video_url\": \"https://example.com/videos/final-battle.mp4\",\n  \"transcription\": \"And I... am... Iron Man.\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/clips-scenes/",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "clips-scenes",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "19. Get ClipScene by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has clip scene data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('scene_name');",
+              "    pm.expect(jsonData).to.have.property('movie_id');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/clips-scenes/{{clipSceneId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "clips-scenes",
+            "{{clipSceneId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "20. Get ClipScenes by Movie",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has data and pagination', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('data');",
+              "    pm.expect(jsonData).to.have.property('pagination');",
+              "    pm.expect(jsonData.pagination).to.have.property('page');",
+              "    pm.expect(jsonData.pagination).to.have.property('page_size');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_items');",
+              "    pm.expect(jsonData.pagination).to.have.property('total_pages');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/clips-scenes/movie/{{movieId}}?page=1&page_size=10",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "clips-scenes",
+            "movie",
+            "{{movieId}}"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "page_size",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "21. Update ClipScene",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has updated clip scene data', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('_id');",
+              "    pm.expect(jsonData).to.have.property('scene_name');",
+              "    pm.expect(jsonData).to.have.property('description');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transcription\": \"Updated transcription: And I... am... Iron Man. *snap*\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/clips-scenes/{{clipSceneId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "clips-scenes",
+            "{{clipSceneId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+      ]
+    },
+    {
       "name": "Cleanup",
       "item": [
         {
-          "name": "20. Delete Movie",
+          "name": "22. Delete ClipScene",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('ClipScene deleted successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('deleted successfully');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/clips-scenes/{{clipSceneId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "clips-scenes",
+            "{{clipSceneId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+        {
+          "name": "23. Delete Movie",
       "event": [
         {
           "listen": "test",
@@ -1081,7 +1348,7 @@
       "response": []
     },
     {
-      "name": "21. Delete Saga",
+      "name": "24. Delete Saga",
       "event": [
         {
           "listen": "test",
@@ -1125,7 +1392,7 @@
       "response": []
     },
     {
-      "name": "22. Delete Company",
+      "name": "25. Delete Company",
       "event": [
         {
           "listen": "test",
@@ -1194,6 +1461,11 @@
     },
     {
       "key": "movieId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clipSceneId",
       "value": "",
       "type": "string"
     }

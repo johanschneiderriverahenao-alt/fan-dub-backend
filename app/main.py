@@ -17,7 +17,8 @@ from app.views import (auth_views,
                        transcription_view,
                        company_views,
                        saga_views,
-                       movie_views)
+                       movie_views,
+                       clip_scene_views)
 
 logger = get_logger(__name__)
 load_dotenv()
@@ -42,6 +43,7 @@ app.include_router(transcription_view.router, tags=["transcriptions"])
 app.include_router(company_views.router, tags=["companies"])
 app.include_router(saga_views.router, tags=["sagas"])
 app.include_router(movie_views.router, tags=["movies"])
+app.include_router(clip_scene_views.router, tags=["clips_scenes"])
 
 
 app.add_middleware(SessionMiddleware,

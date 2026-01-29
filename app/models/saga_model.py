@@ -23,6 +23,7 @@ class SagaBase(BaseModel):
     saga_name: str = Field(..., description="Name of the saga")
     description: str = Field(..., description="Description of the saga")
     company_id: str = Field(..., description="ID of the parent company")
+    image_url: Optional[str] = Field(None, description="URL of the saga image")
 
 
 class SagaCreate(SagaBase):
@@ -35,6 +36,7 @@ class SagaUpdate(BaseModel):
     saga_name: Optional[str] = None
     description: Optional[str] = None
     company_id: Optional[str] = None
+    image_url: Optional[str] = None
     movies_list: Optional[List[str]] = None
 
 
@@ -57,6 +59,7 @@ class SagaResponse(BaseModel):
     saga_name: str
     description: str
     company_id: str
+    image_url: Optional[str] = None
     movies_list: List[str]
     timestamp: str
 

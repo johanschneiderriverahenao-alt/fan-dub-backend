@@ -3,6 +3,7 @@ Movie controller: business logic for creating, retrieving,
 updating and deleting movies. Stores documents in MongoDB.
 """
 # pylint: disable=W0718,R0801
+# flake8: noqa: C901
 from datetime import datetime
 from math import ceil
 
@@ -59,6 +60,8 @@ class MovieController:
                 "description": movie_data.description,
                 "saga_id": movie_data.saga_id,
                 "characters_available": movie_data.characters_available,
+                "image_url": movie_data.image_url,
+                "clips_scenes_list": [],
                 "timestamp": datetime.utcnow()
             }
 
@@ -331,6 +334,7 @@ class MovieController:
         try:
             collection = database["movies"]
             sagas_collection = database["sagas"]
+            clips_scenes_collection = database["clips_scenes"]
 
             movie = await collection.find_one({"_id": oid})
             if not movie:
@@ -338,6 +342,18 @@ class MovieController:
                     status_code=404,
                     content={"detail": "Movie not found"}
                 )
+
+            clips_scenes_list = movie.get("clips_scenes_list", [])
+            deleted_clips_scenes_count = 0
+            if clips_scenes_list:
+                for clip_scene_id in clips_scenes_list:
+                    try:
+                        clip_scene_oid = ObjectId(clip_scene_id)
+                        await clips_scenes_collection.delete_one({"_id": clip_scene_oid})
+                        deleted_clips_scenes_count += 1
+                    except (InvalidId, Exception) as e:
+                        log_error(logger,
+                                  f"Error deleting clip_scene {clip_scene_id}", {"error": str(e)})
 
             await collection.delete_one({"_id": oid})
 
@@ -351,11 +367,16 @@ class MovieController:
                 except (InvalidId, Exception) as e:
                     log_error(logger, "Error removing movie from saga", {"error": str(e)})
 
-            log_info(logger, f"Movie deleted: {movie_id}")
+            log_info(logger,
+                     f"Movie deleted: {movie_id} with {deleted_clips_scenes_count} clip scenes")
 
             return JSONResponse(
                 status_code=200,
-                content={"detail": "Movie deleted successfully", "movie_id": movie_id}
+                content={
+                    "detail": "Movie deleted successfully",
+                    "movie_id": movie_id,
+                    "deleted_clips_scenes": deleted_clips_scenes_count
+                }
             )
         except PyMongoError as e:
             log_error(logger, "Error deleting movie", {"error": str(e)})

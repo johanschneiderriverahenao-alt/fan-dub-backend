@@ -22,6 +22,7 @@ class CompanyBase(BaseModel):
 
     companie_name: str = Field(..., description="Name of the company")
     description: str = Field(..., description="Description of the company")
+    image_url: Optional[str] = Field(None, description="URL of the company image")
 
 
 class CompanyCreate(CompanyBase):
@@ -33,6 +34,7 @@ class CompanyUpdate(BaseModel):
 
     companie_name: Optional[str] = None
     description: Optional[str] = None
+    image_url: Optional[str] = None
     sagas_list: Optional[List[str]] = None
 
 
@@ -54,6 +56,7 @@ class CompanyResponse(BaseModel):
     id: str = Field(alias="_id", description="Company ID")
     companie_name: str
     description: str
+    image_url: Optional[str] = None
     sagas_list: List[str]
     timestamp: str
 

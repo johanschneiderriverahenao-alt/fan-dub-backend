@@ -58,6 +58,7 @@ class SagaController:
                 "saga_name": saga_data.saga_name,
                 "description": saga_data.description,
                 "company_id": saga_data.company_id,
+                "image_url": saga_data.image_url,
                 "movies_list": [],
                 "timestamp": datetime.utcnow()
             }
