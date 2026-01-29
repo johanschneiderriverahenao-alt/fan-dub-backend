@@ -41,6 +41,7 @@ class CompanyController:
             company_dict = {
                 "companie_name": company_data.companie_name,
                 "description": company_data.description,
+                "image_url": company_data.image_url,
                 "sagas_list": [],
                 "timestamp": datetime.utcnow()
             }

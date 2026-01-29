@@ -59,6 +59,7 @@ class MovieController:
                 "description": movie_data.description,
                 "saga_id": movie_data.saga_id,
                 "characters_available": movie_data.characters_available,
+                "image_url": movie_data.image_url,
                 "timestamp": datetime.utcnow()
             }
 

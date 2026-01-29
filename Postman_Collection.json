@@ -278,6 +278,7 @@
               "    pm.expect(jsonData).to.have.property('_id');",
               "    pm.expect(jsonData).to.have.property('companie_name');",
               "    pm.expect(jsonData).to.have.property('description');",
+              "    pm.expect(jsonData).to.have.property('image_url');",
               "    pm.expect(jsonData).to.have.property('sagas_list');",
               "    pm.expect(jsonData).to.have.property('timestamp');",
               "});",
@@ -303,7 +304,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"companie_name\": \"Marvel Studios\",\n  \"description\": \"Leading entertainment company producing superhero films\"\n}"
+          "raw": "{\n  \"companie_name\": \"Marvel Studios\",\n  \"description\": \"Leading entertainment company producing superhero films\",\n  \"image_url\": \"https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800\"\n}"
         },
         "url": {
           "raw": "http://localhost:8000/companies/",
@@ -497,6 +498,7 @@
               "    pm.expect(jsonData).to.have.property('saga_name');",
               "    pm.expect(jsonData).to.have.property('description');",
               "    pm.expect(jsonData).to.have.property('company_id');",
+              "    pm.expect(jsonData).to.have.property('image_url');",
               "    pm.expect(jsonData).to.have.property('movies_list');",
               "    pm.expect(jsonData).to.have.property('timestamp');",
               "});",
@@ -522,7 +524,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"saga_name\": \"The Avengers Saga\",\n  \"description\": \"Epic superhero team saga\",\n  \"company_id\": \"{{companyId}}\"\n}"
+          "raw": "{\n  \"saga_name\": \"The Avengers Saga\",\n  \"description\": \"Epic superhero team saga\",\n  \"company_id\": \"{{companyId}}\",\n  \"image_url\": \"https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800\"\n}"
         },
         "url": {
           "raw": "http://localhost:8000/sagas/",
@@ -775,6 +777,7 @@
               "    pm.expect(jsonData).to.have.property('movie_name');",
               "    pm.expect(jsonData).to.have.property('description');",
               "    pm.expect(jsonData).to.have.property('saga_id');",
+              "    pm.expect(jsonData).to.have.property('image_url');",
               "    pm.expect(jsonData).to.have.property('characters_available');",
               "    pm.expect(jsonData).to.have.property('timestamp');",
               "});",
@@ -800,7 +803,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"movie_name\": \"Avengers: Endgame\",\n  \"description\": \"Epic conclusion to the Infinity Saga\",\n  \"saga_id\": \"{{sagaId}}\",\n  \"characters_available\": [\"Iron Man\", \"Captain America\", \"Thor\", \"Hulk\", \"Black Widow\", \"Hawkeye\"]\n}"
+          "raw": "{\n  \"movie_name\": \"Avengers: Endgame\",\n  \"description\": \"Epic conclusion to the Infinity Saga\",\n  \"saga_id\": \"{{sagaId}}\",\n  \"characters_available\": [\"Iron Man\", \"Captain America\", \"Thor\", \"Hulk\", \"Black Widow\", \"Hawkeye\"],\n  \"image_url\": \"https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800\"\n}"
         },
         "url": {
           "raw": "http://localhost:8000/movies/",

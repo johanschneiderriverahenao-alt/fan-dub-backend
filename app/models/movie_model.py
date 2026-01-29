@@ -25,6 +25,7 @@ class MovieBase(BaseModel):
     saga_id: str = Field(..., description="ID of the parent saga")
     characters_available: List[str] = Field(default_factory=list,
                                             description="Available characters")
+    image_url: Optional[str] = Field(None, description="URL of the movie image")
 
 
 class MovieCreate(MovieBase):
@@ -38,6 +39,7 @@ class MovieUpdate(BaseModel):
     description: Optional[str] = None
     saga_id: Optional[str] = None
     characters_available: Optional[List[str]] = None
+    image_url: Optional[str] = None
 
 
 class MovieDB(MovieBase):
@@ -59,6 +61,7 @@ class MovieResponse(BaseModel):
     description: str
     saga_id: str
     characters_available: List[str]
+    image_url: Optional[str] = None
     timestamp: str
 
     @classmethod
