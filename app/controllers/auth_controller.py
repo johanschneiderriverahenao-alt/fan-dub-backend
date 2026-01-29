@@ -14,7 +14,14 @@ from bson import ObjectId
 
 from app.config.settings import settings
 from app.config.database import database
-from app.models.user import UserLogin, UserResponse, UserInDB, UserBase, ChangePassword
+from app.models.user import (
+    UserLogin,
+    UserResponse,
+    UserInDB,
+    UserBase,
+    ChangePassword,
+    ChangeEmail,
+)
 from app.utils.logger import get_logger, log_info, log_error
 
 logger = get_logger(__name__)
@@ -62,6 +69,33 @@ class AuthController:
         except Exception as e:
             log_error(logger, "Error verifying password", {"error": str(e)})
             return False
+
+    @staticmethod
+    async def _audit_log(user_email: str, action: str, status_text: str,
+                         details: dict, user_id: Optional[str] = None) -> None:
+        """Insert an audit log entry, errors are logged but do not raise."""
+        try:
+            entry = {
+                "user_email": user_email,
+                "action": action,
+                "status": status_text,
+                "details": details,
+                "created_at": datetime.utcnow(),
+            }
+            if user_id:
+                entry["user_id"] = user_id
+            await database["audit_logs"].insert_one(entry)
+        except Exception as e:
+            log_error(logger, f"Failed to create audit log for {action}", {"error": str(e)})
+
+    @staticmethod
+    async def _get_user_by_email(email: str) -> Optional[dict]:
+        """Return user document by email or None."""
+        try:
+            return await database["users"].find_one({"email": email})
+        except Exception as e:
+            log_error(logger, "Error fetching user by email", {"error": str(e), "email": email})
+            return None
 
     @staticmethod
     def create_access_token(user_id: str, expires_delta: Optional[timedelta] = None) -> str:
@@ -152,13 +186,14 @@ class AuthController:
         """
         try:
             email_norm = AuthController._validate_and_normalize_email(
-                getattr(login_data, "email", None))
+                getattr(login_data, "email", None)
+            )
 
             user = await database["users"].find_one({"email": email_norm})
 
             if not user or not AuthController.verify_password(
                 login_data.password,
-                user["password_hash"]
+                user["password_hash"],
             ):
                 log_info(logger, f"Failed login attempt for email {login_data.email}")
 
@@ -168,7 +203,7 @@ class AuthController:
                         "action": "LOGIN",
                         "status": "FAILED",
                         "details": {"reason": "Invalid credentials"},
-                        "created_at": datetime.utcnow()
+                        "created_at": datetime.utcnow(),
                     })
                 except Exception as audit_error:
                     log_error(logger, "Failed to create audit log for failed login",
@@ -176,7 +211,7 @@ class AuthController:
 
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid email or password"
+                    detail="Invalid email or password",
                 )
 
             access_token = AuthController.create_access_token(str(user["_id"]))
@@ -195,7 +230,7 @@ class AuthController:
                     "action": "LOGIN",
                     "status": "SUCCESS",
                     "details": {"ip": "unknown", "user_agent": "unknown"},
-                    "created_at": datetime.utcnow()
+                    "created_at": datetime.utcnow(),
                 })
             except Exception as audit_error:
                 log_error(logger, "Failed to create audit log for successful login",
@@ -207,8 +242,8 @@ class AuthController:
                     "access_token": access_token,
                     "token_type": "bearer",
                     "user": user_response.dict(),
-                    "log": f"User {login_data.email} authenticated successfully"
-                }
+                    "log": f"User {login_data.email} authenticated successfully",
+                },
             )
 
         except HTTPException:
@@ -217,7 +252,7 @@ class AuthController:
             log_error(logger, "Unexpected error during login", {"error": str(e)})
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"message": "Login failed", "log": str(e)}
+                content={"message": "Login failed", "log": str(e)},
             )
 
     @staticmethod
@@ -335,7 +370,6 @@ class AuthController:
             new_user = {
                 "email": email_norm,
                 "password_hash": hashed_password,
-                "role": "user",
                 "created_at": datetime.utcnow()
             }
 
@@ -365,13 +399,6 @@ class AuthController:
                 }
             )
 
-        except HTTPException as http_exc:
-            log_error(logger, "Validation error during registration",
-                      {"detail": http_exc.detail, "status_code": http_exc.status_code})
-            return JSONResponse(
-                status_code=http_exc.status_code,
-                content={"message": "Registration failed", "details": http_exc.detail}
-            )
         except Exception as e:
             log_error(logger, "Unexpected error during registration", {"error": str(e)})
             return JSONResponse(
@@ -445,57 +472,140 @@ class AuthController:
             JSONResponse with operation result.
         """
         try:
+            email_norm = AuthController._validate_and_normalize_email(
+                getattr(password_data, "email", None)
+            )
+
+            AuthController._validate_password_for_registration(
+                getattr(password_data, "new_password", None), email_norm
+            )
+
             db = database["users"]
-            user = await db.find_one({"email": password_data.email})
+            user = await db.find_one({"email": email_norm})
             if not user:
-                log_info(logger, f"Password change attempt for unknown email {password_data.email}")
+                log_info(logger, f"Password change attempt for unknown email {email_norm}")
                 return JSONResponse(status_code=404, content={"error": "User not found"})
 
             if not AuthController.verify_password(
                     password_data.current_password, user["password_hash"]):
-                try:
-                    await database["audit_logs"].insert_one({
-                        "user_email": password_data.email,
-                        "action": "PASSWORD_CHANGE",
-                        "status": "FAILED",
-                        "details": {"reason": "Incorrect current password"},
-                        "created_at": datetime.utcnow()
-                    })
-                except Exception as audit_error:
-                    log_error(
-                        logger, "Failed to create audit log for failed password change",
-                        {"error": str(audit_error)})
+                await AuthController._audit_log(
+                    email_norm,
+                    "PASSWORD_CHANGE",
+                    "FAILED",
+                    {"reason": "Incorrect current password"},
+                    user_id=str(user.get("_id")) if user else None,
+                )
 
-                log_info(logger, f"Incorrect current password for email {password_data.email}")
+                log_info(logger, f"Incorrect current password for email {email_norm}")
                 return JSONResponse(
-                        status_code=401, content={"error": "Current password is incorrect"})
+                    status_code=401, content={"error": "Current password is incorrect"})
+
+            if password_data.new_password == password_data.current_password:
+                await AuthController._audit_log(
+                    email_norm,
+                    "PASSWORD_CHANGE",
+                    "FAILED",
+                    {"reason": "New password equals current password"},
+                    user_id=str(user.get("_id")) if user else None,
+                )
+
+                log_info(logger, f"Attempt to change to same password for email {email_norm}")
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "New password must be different from current passwords"}
+                )
 
             new_hashed = AuthController.hash_password(password_data.new_password)
             await db.update_one({"_id": user["_id"]}, {"$set": {"password_hash": new_hashed}})
 
-            try:
-                await database["audit_logs"].insert_one({
-                    "user_id": str(user.get("_id")),
-                    "user_email": password_data.email,
-                    "action": "PASSWORD_CHANGE",
-                    "status": "SUCCESS",
-                    "details": {"method": "email_and_current_password"},
-                    "created_at": datetime.utcnow()
-                })
-            except Exception as audit_error:
-                log_error(
-                    logger,
-                    "Failed to create audit log for successful password change",
-                    {"error": str(audit_error)})
+            await AuthController._audit_log(
+                email_norm,
+                "PASSWORD_CHANGE",
+                "SUCCESS",
+                {"method": "email_and_current_password"},
+                user_id=str(user.get("_id")) if user else None,
+            )
 
-            log_info(logger, f"Password changed successfully for email {password_data.email}")
+            log_info(logger, f"Password changed successfully for email {email_norm}")
             return JSONResponse(
                 status_code=200, content={"message": "Password changed successfully"})
 
+        except HTTPException as http_exc:
+            log_error(logger, "Validation error during password change",
+                      {"detail": http_exc.detail, "status_code": http_exc.status_code})
+            return JSONResponse(
+                status_code=http_exc.status_code,
+                content={"message": "Password change failed", "details": http_exc.detail}
+            )
         except Exception as e:
             log_error(logger, "Unexpected error changing password", {"error": str(e)})
             return JSONResponse(
                 status_code=500, content={"error": "Password change failed", "details": str(e)})
+
+    @staticmethod
+    async def change_email(email_data: ChangeEmail) -> JSONResponse:
+        """Change a user's email after validating new and current email and password."""
+        status_code = None
+        content = None
+        try:
+            old_email = AuthController._validate_and_normalize_email(getattr(email_data,
+                                                                             "email", None))
+            new_email = AuthController._validate_and_normalize_email(getattr(email_data,
+                                                                             "new_email", None))
+
+            if old_email == new_email:
+                log_info(logger, f"Attempt to change to same email for {old_email}")
+                status_code = status.HTTP_400_BAD_REQUEST
+                content = {"error": "New email must be different from current email"}
+            else:
+                user = await AuthController._get_user_by_email(old_email)
+                if not user:
+                    log_info(logger, f"Email change attempt for unknown email {old_email}")
+                    status_code = status.HTTP_404_NOT_FOUND
+                    content = {"error": "User not found"}
+                else:
+                    if not AuthController.verify_password(email_data.current_password,
+                                                          user["password_hash"]):
+                        await AuthController._audit_log(old_email, "EMAIL_CHANGE",
+                                                        "FAILED", {"reason": "Incorrect password"},
+                                                        user_id=str(user.get("_id"))
+                                                        if user else None)
+                        log_info(logger, f"Incorrect password for email change for {old_email}")
+                        status_code = status.HTTP_401_UNAUTHORIZED
+                        content = {"error": "Current password is incorrect"}
+                    else:
+                        existing = await AuthController._get_user_by_email(new_email)
+                        if existing:
+                            log_info(
+                                logger,
+                                f"Email change attempt to already-registered email {new_email}")
+                            status_code = status.HTTP_400_BAD_REQUEST
+                            content = {"error": "Email already registered"}
+                        else:
+                            await database["users"].update_one({"_id": user["_id"]},
+                                                               {"$set": {"email": new_email}})
+                            await AuthController._audit_log(old_email,
+                                                            "EMAIL_CHANGE", "SUCCESS",
+                                                            {"new_email": new_email},
+                                                            user_id=str(user.get("_id"))
+                                                            if user else None)
+                            log_info(logger, f"Email changed from {old_email} to {new_email}")
+                            status_code = status.HTTP_200_OK
+                            content = {"message": "Email changed successfully", "email": new_email}
+
+        except Exception as e:
+            if isinstance(e, HTTPException):
+                http_exc = e
+                log_error(logger, "Validation error during email change",
+                          {"detail": http_exc.detail, "status_code": http_exc.status_code})
+                status_code = http_exc.status_code
+                content = {"message": "Email change failed", "details": http_exc.detail}
+            else:
+                log_error(logger, "Unexpected error changing email", {"error": str(e)})
+                status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+                content = {"error": "Email change failed", "details": str(e)}
+
+        return JSONResponse(status_code=status_code, content=content)
 
     @staticmethod
     async def get_user_profile(user_id: str) -> JSONResponse:
@@ -617,53 +727,39 @@ class AuthController:
 
     @staticmethod
     async def update_user_role(user_email: str, new_role: str) -> JSONResponse:
-        """
-        Update user role (admin only operation).
+        """Update a user's role (admin operation).
 
-        Args:
-            user_email: Email of user to update.
-            new_role: New role (user or admin).
-
-        Returns:
-            JSONResponse with updated user data.
-
-        Raises:
-            HTTPException if user not found or update fails.
+        Validates role and updates the user document.
         """
         try:
             if new_role not in ["user", "admin"]:
                 return JSONResponse(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    content={"error": "Invalid role. Must be 'user' or 'admin'"}
+                    content={"error": "Invalid role. Must be 'user' or 'admin'"},
                 )
 
             email_norm = user_email.lower()
 
             result = await database["users"].update_one(
-                {"email": email_norm},
-                {"$set": {"role": new_role}}
+                {"email": email_norm}, {"$set": {"role": new_role}}
             )
 
-            if result.matched_count == 0:
+            if getattr(result, "matched_count", 0) == 0:
                 return JSONResponse(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    content={"error": "User not found"}
+                    status_code=status.HTTP_404_NOT_FOUND, content={"error": "User not found"}
                 )
 
             log_info(logger, f"User {user_email} role updated to {new_role}")
 
             return JSONResponse(
                 status_code=status.HTTP_200_OK,
-                content={
-                    "message": f"User role updated to {new_role}",
-                    "email": user_email,
-                    "role": new_role
-                }
+                content={"message": f"User role updated to {new_role}", "email": user_email,
+                         "role": new_role},
             )
 
         except Exception as e:
             log_error(logger, "Error updating user role", {"error": str(e)})
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"error": "Failed to update user role", "details": str(e)}
+                content={"error": "Failed to update user role", "details": str(e)},
             )

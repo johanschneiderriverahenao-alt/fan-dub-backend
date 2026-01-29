@@ -52,12 +52,34 @@ class ChangePassword(BaseModel):
     """Model for password change requests using email and current password."""
 
     email: EmailStr = Field(..., max_length=254)
-    current_password: str = Field(..., min_length=1)
+    current_password: str = Field(..., min_length=8, max_length=72)
     new_password: str = Field(..., min_length=8, max_length=72)
 
     @field_validator("email", mode="before")
     @classmethod
     def _normalize_email(cls, v):
+        if isinstance(v, str):
+            return v.lower()
+        return v
+
+
+class ChangeEmail(BaseModel):
+    """Model for email change requests requiring current password."""
+
+    email: EmailStr = Field(..., max_length=254)
+    new_email: EmailStr = Field(..., max_length=254)
+    current_password: str = Field(..., min_length=8, max_length=72)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalize_email(cls, v):
+        if isinstance(v, str):
+            return v.lower()
+        return v
+
+    @field_validator("new_email", mode="before")
+    @classmethod
+    def _normalize_new_email(cls, v):
         if isinstance(v, str):
             return v.lower()
         return v
