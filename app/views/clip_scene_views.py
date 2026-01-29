@@ -29,7 +29,7 @@ router = APIRouter()
 @router.post("/clips-scenes/", response_class=JSONResponse)
 async def create_clip_scene(
     clip_scene: ClipSceneCreate,
-    _: dict = Depends(AuthController.get_current_user)
+    _: dict = Depends(get_current_admin)
 ) -> JSONResponse:
     """
     Create a new clip scene.
@@ -119,7 +119,7 @@ async def get_clips_scenes_by_movie(
 async def update_clip_scene(
     clip_scene_id: str,
     updates: ClipSceneUpdate,
-    _: dict = Depends(AuthController.get_current_user)
+    _: dict = Depends(get_current_admin)
 ) -> JSONResponse:
     """
     Update a clip scene by ID.
