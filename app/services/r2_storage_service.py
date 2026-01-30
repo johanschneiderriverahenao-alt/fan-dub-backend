@@ -30,7 +30,7 @@ class R2StorageService:
                 endpoint_url=settings.r2_endpoint_url,
                 aws_access_key_id=settings.r2_access_key_id,
                 aws_secret_access_key=settings.r2_secret_access_key,
-                region_name='auto'  # R2 uses 'auto' for region
+                region_name='auto'
             )
             self.bucket_name = settings.r2_bucket_name
             self.public_url = settings.r2_public_url
@@ -51,12 +51,8 @@ class R2StorageService:
         Returns:
             ASCII-safe filename
         """
-        # Normalize unicode characters (NFD = decomposed form)
-        # This separates accents from base characters
         normalized = unicodedata.normalize('NFD', filename)
-        # Filter out combining characters (accents) and keep only ASCII
         ascii_name = ''.join(c for c in normalized if unicodedata.category(c) != 'Mn')
-        # Encode to ASCII, replacing any remaining non-ASCII chars
         return ascii_name.encode('ascii', 'ignore').decode('ascii')
 
     def _generate_file_key(self, folder: str, filename: str) -> str:
@@ -71,7 +67,6 @@ class R2StorageService:
             Unique file key with timestamp
         """
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        # Clean filename and add timestamp
         clean_name = filename.replace(" ", "_")
         return f"{folder}/{timestamp}_{clean_name}"
 
@@ -103,7 +98,6 @@ class R2StorageService:
 
             content_type = file.content_type or "application/octet-stream"
 
-            # Sanitize filename for metadata (S3 only accepts ASCII)
             safe_filename = self._sanitize_filename(file.filename)
 
             self.s3_client.put_object(
@@ -242,6 +236,63 @@ class R2StorageService:
             return True
         except ClientError:
             return False
+
+    async def upload_file_bytes(
+        self,
+        file_bytes: bytes,
+        filename: str,
+        folder: str = "videos",
+        content_type: str = "audio/mpeg"
+    ) -> dict:
+        """
+        Upload raw bytes to R2 storage.
+
+        Args:
+            file_bytes: File content as bytes
+            filename: Filename for the upload
+            folder: Folder/prefix for organizing files
+            content_type: MIME type of the file
+
+        Returns:
+            Dict with file_key, file_url, and metadata
+
+        Raises:
+            RuntimeError: If upload fails
+        """
+        try:
+            file_key = self._generate_file_key(folder, filename)
+
+            safe_filename = self._sanitize_filename(filename)
+
+            self.s3_client.put_object(
+                Bucket=self.bucket_name,
+                Key=file_key,
+                Body=file_bytes,
+                ContentType=content_type,
+                Metadata={
+                    "original_filename": safe_filename,
+                    "upload_date": datetime.utcnow().isoformat()
+                }
+            )
+
+            file_url = self._generate_public_url(file_key)
+
+            log_info(logger, f"Bytes uploaded successfully: {file_key}")
+
+            return {
+                "file_key": file_key,
+                "file_url": file_url,
+                "original_filename": filename,
+                "content_type": content_type,
+                "size": len(file_bytes)
+            }
+
+        except (ClientError, BotoCoreError) as e:
+            log_error(logger, "R2 bytes upload failed", {"error": str(e), "filename": filename})
+            raise RuntimeError(f"Failed to upload bytes to R2: {str(e)}") from e
+        except Exception as e:
+            log_error(logger, "Unexpected error during bytes upload", {"error": str(e)})
+            raise RuntimeError(f"Unexpected bytes upload error: {str(e)}") from e
 
 
 r2_service = R2StorageService()

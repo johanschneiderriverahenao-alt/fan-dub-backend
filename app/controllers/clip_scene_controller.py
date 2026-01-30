@@ -234,7 +234,6 @@ class ClipSceneController:
             update_data = {}
             for k, v in updates.model_dump(exclude_unset=True).items():
                 if v is not None:
-                    # Convert Character objects to dicts for MongoDB
                     if k == "characters" and v:
                         update_data[k] = [char if isinstance(char, dict) else char for char in v]
                     else:
