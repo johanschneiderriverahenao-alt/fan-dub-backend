@@ -110,17 +110,19 @@ class TranscriptionController:
     async def create_transcription(
         background_audio_file: Optional[UploadFile],
         voices_audio_file: Optional[UploadFile],
+        video_file: Optional[UploadFile],
         movie_id: str,
         clip_scene_id: str,
         duration: float,
         characters: Optional[list] = None,
         status: str = "pending"
     ) -> JSONResponse:
-        """Create a new transcription with audio files uploaded to R2.
+        """Create a new transcription with audio/video files uploaded to R2.
 
         Args:
             background_audio_file: Audio file with background/music only
             voices_audio_file: Audio file with all character voices
+            video_file: Original video file (optional)
             movie_id: Movie ID
             clip_scene_id: Clip/scene ID
             duration: Duration in seconds
@@ -139,6 +141,7 @@ class TranscriptionController:
 
         background_url = None
         voices_url = None
+        video_url = None
         r2_service = R2StorageService()
 
         try:
@@ -160,9 +163,19 @@ class TranscriptionController:
                 voices_url = upload_result["file_url"]
                 log_info(logger, f"Voices audio uploaded: {voices_url}")
 
+            if video_file and video_file.filename:
+                log_info(logger, f"Uploading video: {video_file.filename}")
+                upload_result = await r2_service.upload_file(
+                    video_file,
+                    folder="transcriptions/videos"
+                )
+                video_url = upload_result["file_url"]
+                log_info(logger, f"Video uploaded: {video_url}")
+
             result = await database["transcriptions"].insert_one({
                 "movie_id": movie_id,
                 "clip_scene_id": clip_scene_id,
+                "video_url": video_url,
                 "background_audio_url": background_url,
                 "voices_audio_url": voices_url,
                 "characters": characters or [],

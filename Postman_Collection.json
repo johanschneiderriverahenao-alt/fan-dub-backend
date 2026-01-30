@@ -1645,6 +1645,12 @@
                   "description": "Audio file with all character voices (.mp3)"
                 },
                 {
+                  "key": "video_file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Original video file (.mp4, .webm) - OPTIONAL"
+                },
+                {
                   "key": "movie_id",
                   "value": "{{movieId}}",
                   "type": "text"
@@ -2205,6 +2211,14 @@
                   "    pm.expect(jsonData).to.have.property('session');",
                   "    pm.expect(jsonData.session.status).to.equal('completed');",
                   "    console.log('Final dubbed audio URL:', jsonData.final_audio_url);",
+                  "    ",
+                  "    // Check if video was generated (optional)",
+                  "    if (jsonData.final_video_url) {",
+                  "        console.log('✅ Final dubbed VIDEO URL:', jsonData.final_video_url);",
+                  "        pm.expect(jsonData.message).to.include('Video');",
+                  "    } else {",
+                  "        console.log('ℹ️ Audio-only output (no video in transcription)');",
+                  "    }",
                   "});"
                 ]
               }
