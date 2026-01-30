@@ -95,28 +95,16 @@ class NewsController:
             JSONResponse with updated news item
         """
         try:
-            try:
-                oid = ObjectId(news_id)
-            except InvalidId:
-                return JSONResponse(status_code=400, content={"detail": "Invalid news ID format"})
+            status_code, content, oid, update_data = (
+                NewsController._prepare_update(news_id, updates)
+            )
+
+            if status_code is not None:
+                return JSONResponse(status_code=status_code, content=content)
 
             collection = database["news"]
 
-            update_data = {k: v for k,
-                           v in updates.model_dump(exclude_unset=True).items() if v is not None}
-
-            if not update_data:
-                return JSONResponse(status_code=400,
-                                    content={"detail": "No valid fields to update"})
-
-            if "title" in update_data and not str(update_data["title"]).strip():
-                return JSONResponse(status_code=400, content={"detail": "Title must not be empty"})
-            if "description" in update_data and not str(update_data["description"]).strip():
-                return JSONResponse(status_code=400,
-                                    content={"detail": "Description must not be empty"})
-
             result = await collection.update_one({"_id": oid}, {"$set": update_data})
-
             if result.matched_count == 0:
                 return JSONResponse(status_code=404, content={"detail": "News not found"})
 
@@ -128,13 +116,43 @@ class NewsController:
             return JSONResponse(status_code=200, content=response.model_dump(by_alias=True))
         except PyMongoError as e:
             log_error(logger, "Error updating news", {"error": str(e)})
-            return JSONResponse(status_code=500,
-                                content={"detail": "Failed to update news", "error": str(e)})
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Failed to update news", "error": str(e)},
+            )
+
+    @staticmethod
+    def _prepare_update(news_id: str, updates: NewsUpdate):
+        """Validate input and prepare ObjectId + update_data.
+
+        Returns: (status_code, content, oid, update_data)
+        If status_code is None then validation passed.
+        """
+        try:
+            oid = ObjectId(news_id)
+        except InvalidId:
+            return 400, {"detail": "Invalid news ID format"}, None, None
+
+        update_data = {
+            k: v
+            for k, v in updates.model_dump(exclude_unset=True).items()
+            if v is not None
+        }
+
+        if not update_data:
+            return 400, {"detail": "No valid fields to update"}, oid, {}
+
+        if "title" in update_data and not str(update_data["title"]).strip():
+            return 400, {"detail": "Title must not be empty"}, oid, update_data
+
+        if "description" in update_data and not str(update_data["description"]).strip():
+            return 400, {"detail": "Description must not be empty"}, oid, update_data
+
+        return None, None, oid, update_data
 
     @staticmethod
     async def delete_news(news_id: str) -> JSONResponse:
-        """
-        Delete a news item by ID.
+        """Delete a news item by ID.
 
         Returns:
             JSONResponse with deletion confirmation
@@ -155,9 +173,13 @@ class NewsController:
 
             log_info(logger, f"News deleted: {news_id}")
 
-            return JSONResponse(status_code=200,
-                                content={"detail": "News deleted successfully", "news_id": news_id})
+            return JSONResponse(
+                status_code=200,
+                content={"detail": "News deleted successfully", "news_id": news_id},
+            )
         except PyMongoError as e:
             log_error(logger, "Error deleting news", {"error": str(e)})
-            return JSONResponse(status_code=500,
-                                content={"detail": "Failed to delete news", "error": str(e)})
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Failed to delete news", "error": str(e)},
+            )
