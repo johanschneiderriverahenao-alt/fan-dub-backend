@@ -7,7 +7,16 @@ from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
-from app.models.user import UserLogin, UserBase, ChangePassword, ChangeEmail
+from app.models.user import (
+    UserLogin,
+    UserBase,
+    ChangePassword,
+    ChangeEmail,
+    VerificationRequest,
+    VerificationConfirm,
+    RegisterWithVerification,
+    ChangePasswordWithVerification
+)
 from app.controllers.auth_controller import AuthController
 from app.utils.logger import get_logger
 from app.utils.dependencies import get_current_user_from_token, get_current_admin
@@ -233,4 +242,131 @@ async def update_user_role(
         return JSONResponse(
             status_code=500,
             content={"message": "Role update failed", "details": str(e)}
+        )
+
+
+@router.post("/send-verification-code")
+async def send_verification_code(verification_request: VerificationRequest) -> JSONResponse:
+    """
+    Send a verification code to the user's email.
+
+    Args:
+        verification_request: Contains email and purpose (registration or password_change).
+
+    Returns:
+        JSONResponse indicating success or failure.
+
+    Status Codes:
+        - 200: Verification code sent successfully.
+        - 400: Email already registered (for registration) or invalid request.
+        - 404: User not found (for password_change).
+        - 500: Unexpected server error.
+    """
+    try:
+        response = await AuthController.send_verification_code(verification_request)
+        return response
+    except HTTPException as he:
+        logger.error("Validation error in send verification code endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
+    except Exception as e:
+        logger.error("Unexpected error in send verification code endpoint: %s", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"message": "Failed to send verification code", "details": str(e)}
+        )
+
+
+@router.post("/verify-code")
+async def verify_code(verification_confirm: VerificationConfirm) -> JSONResponse:
+    """
+    Verify a verification code and return a verification token.
+
+    Args:
+        verification_confirm: Contains email, code, and purpose.
+
+    Returns:
+        JSONResponse with verification token on success.
+
+    Status Codes:
+        - 200: Code verified successfully.
+        - 400: Invalid or expired code.
+        - 500: Unexpected server error.
+    """
+    try:
+        response = await AuthController.verify_code(verification_confirm)
+        return response
+    except HTTPException as he:
+        logger.error("Validation error in verify code endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
+    except Exception as e:
+        logger.error("Unexpected error in verify code endpoint: %s", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"message": "Failed to verify code", "details": str(e)}
+        )
+
+
+@router.post("/register-with-verification")
+async def register_with_verification(
+    registration_data: RegisterWithVerification
+) -> JSONResponse:
+    """
+    Complete user registration after email verification.
+
+    Args:
+        registration_data: Contains email, password, and verification_token.
+
+    Returns:
+        JSONResponse with new user information on success.
+
+    Status Codes:
+        - 201: User registered successfully.
+        - 400: Invalid verification token or email already registered.
+        - 500: Unexpected server error.
+    """
+    try:
+        response = await AuthController.register_with_verification(registration_data)
+        return response
+    except HTTPException as he:
+        logger.error("Validation error in register with verification endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
+    except Exception as e:
+        logger.error("Unexpected error in register with verification endpoint: %s", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"message": "Registration failed", "details": str(e)}
+        )
+
+
+@router.post("/change-password-with-verification")
+async def change_password_with_verification(
+    password_data: ChangePasswordWithVerification
+) -> JSONResponse:
+    """
+    Change user password after email verification.
+
+    Args:
+        password_data: Contains email, new_password, and verification_token.
+
+    Returns:
+        JSONResponse with operation result.
+
+    Status Codes:
+        - 200: Password changed successfully.
+        - 400: Invalid verification token.
+        - 404: User not found.
+        - 500: Unexpected server error.
+    """
+    try:
+        response = await AuthController.change_password_with_verification(password_data)
+        return response
+    except HTTPException as he:
+        logger.error("Validation error in change password with verification endpoint: %s",
+                     str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
+    except Exception as e:
+        logger.error("Unexpected error in change password with verification endpoint: %s", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"message": "Password change failed", "details": str(e)}
         )

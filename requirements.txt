@@ -15,5 +15,6 @@ cloudinary
 boto3
 pydub
 requests
+resend
 flake8
 pylint
