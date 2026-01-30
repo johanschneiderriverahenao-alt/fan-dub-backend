@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     r2_bucket_name: str = "dub-videos"
     r2_public_url: str = ""
 
+    resend_api_key: str = ""
+    resend_from_email: str = "YouDub 🎙️ <onboarding@resend.dev>"
+
     app_name: str = "Fan Dub Backend"
     app_version: str = "1.0.0"
     debug: bool = False

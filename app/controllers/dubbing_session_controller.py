@@ -18,6 +18,7 @@ from pydub import AudioSegment
 from app.config.database import database
 from app.models.dubbing_session_model import DubbingSessionResponse
 from app.services.r2_storage_service import R2StorageService
+from app.services.email_service import EmailService
 from app.utils.logger import get_logger, log_info, log_error
 
 logger = get_logger(__name__)
@@ -826,6 +827,29 @@ class DubbingSessionController:
             log_info(logger, f"Dubbing session {session_id} processing completed!")
 
             updated_session = await database["dubbing_sessions"].find_one({"_id": obj_id})
+
+            completed_count = await database["dubbing_sessions"].count_documents({
+                "user_id": user_id,
+                "status": "completed"
+            })
+
+            if completed_count == 1:
+                try:
+                    user = await database["users"].find_one({"_id": ObjectId(user_id)})
+                    if user and user.get("email"):
+                        dubbing_url = final_video_url if final_video_url else final_url
+
+                        log_info(logger, f"Sending first dubbing email to {user['email']}")
+                        await EmailService.send_first_dubbing_email(
+                            email=user["email"],
+                            video_url=dubbing_url
+                        )
+                except Exception as email_error:
+                    log_error(
+                        logger,
+                        "Failed to send first dubbing email", 
+                        {"error": str(email_error)}
+                    )
 
             session_response = DubbingSessionResponse.from_db(updated_session)
 

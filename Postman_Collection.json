@@ -10,7 +10,168 @@
       "name": "Authentication",
       "item": [
         {
-          "name": "1. Register User",
+          "name": "1a. Send Verification Code (Registration)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate unique email for new registration",
+                  "const timestamp = new Date().getTime();",
+                  "const testEmail = 'test' + timestamp + '@example.com';",
+                  "pm.environment.set('testEmail', testEmail);",
+                  "console.log('Generated email:', testEmail);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Verification code sent', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.include('enviado');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "verification-registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"purpose\": \"registration\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/auth/send-verification-code",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "auth",
+                "send-verification-code"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1b. Verify Code (Registration)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Verification token received', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('verification_token');",
+                  "    pm.environment.set('verificationToken', jsonData.verification_token);",
+                  "    console.log('Verification token saved');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "verify-code-registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"code\": \"123456\",\n  \"purpose\": \"registration\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/auth/verify-code",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "auth",
+                "verify-code"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1c. Complete Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('User registered successfully', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('user_id');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "complete-registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"TestPassword123!\",\n  \"verification_token\": \"{{verificationToken}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/auth/register-with-verification",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "auth",
+                "register-with-verification"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1. Register User (OLD - No Verification)",
           "event": [
             {
               "listen": "prerequest",
@@ -175,7 +336,7 @@
           "response": []
         },
         {
-          "name": "4. Change Password",
+          "name": "4. Change Password (OLD - No Verification)",
           "event": [
             {
               "listen": "test",
@@ -218,6 +379,154 @@
               "path": [
                 "auth",
                 "change-password"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4a. Send Verification Code (Password Change)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Verification code sent', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.include('enviado');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "verification-password-change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"purpose\": \"password_change\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/auth/send-verification-code",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "auth",
+                "send-verification-code"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4b. Verify Code (Password Change)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Verification token received', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('verification_token');",
+                  "    pm.environment.set('passwordChangeToken', jsonData.verification_token);",
+                  "    console.log('Password change verification token saved');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "verify-code-password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"code\": \"123456\",\n  \"purpose\": \"password_change\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/auth/verify-code",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "auth",
+                "verify-code"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4c. Complete Password Change",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Password changed successfully', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.include('exitosamente');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "id": "complete-password-change",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"new_password\": \"NewPassword456!\",\n  \"verification_token\": \"{{passwordChangeToken}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/auth/change-password-with-verification",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "auth",
+                "change-password-with-verification"
               ]
             }
           },
@@ -2501,6 +2810,18 @@
     },
     {
       "key": "dubbingSessionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "id": "verification-token-id",
+      "key": "verificationToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "id": "password-change-token-id",
+      "key": "passwordChangeToken",
       "value": "",
       "type": "string"
     }
