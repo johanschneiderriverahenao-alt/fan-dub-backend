@@ -8,7 +8,7 @@ Endpoints:
  - GET /transcriptions/{id}     -> get transcription by _id
  - DELETE /transcriptions/{id}  -> delete transcription by _id
 """
-# pylint: disable=R0913
+# pylint: disable=R0913,R0917
 
 import json
 from fastapi import APIRouter, Depends, UploadFile, Form, Body

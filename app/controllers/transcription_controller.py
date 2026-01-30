@@ -3,7 +3,7 @@ Transcription controller: business logic for creating, retrieving,
 updating and deleting transcriptions. Uses OpenAI transcription endpoint
 via curl and stores documents in MongoDB.
 """
-# pylint: disable=R0913
+# pylint: disable=R0913,R0917
 # flake8: noqa: C901
 from datetime import datetime
 import os
