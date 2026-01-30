@@ -3,6 +3,7 @@ Dubbing Session controller: business logic for user dubbing sessions.
 """
 # pylint: disable=W0718,R0801,C0302,R0914,R0911,R0912,R0915,R0914,R1732
 # flake8: noqa: C901
+import subprocess
 from datetime import datetime
 import tempfile
 import os
@@ -65,31 +66,19 @@ class DubbingSessionController:
             existing_session = await database["dubbing_sessions"].find_one({
                 "transcription_id": transcription_id,
                 "character_id": character_id,
+                "user_id": user_id,
                 "status": {"$ne": "deleted"}
             })
 
             if existing_session:
-                if existing_session.get("user_id") != user_id:
-                    return JSONResponse(
-                        status_code=409,
-                        content={
-                            "detail": (
-                                f"Character '{character.get('character_name')}' "
-                                "is already being dubbed by another user"
-                            ),
-                            "character_name": character.get("character_name"),
-                            "conflict": True,
-                            "suggestion": (
-                                "Choose a different character or wait for the user to finish"
-                            ),
-                        },
-                    )
                 return JSONResponse(
                     status_code=200,
                     content={
                         "message": "You already have a session for this character",
-                        "session": DubbingSessionResponse.from_db(existing_session).dict()
-                    }
+                        "session": DubbingSessionResponse.from_db(
+                            existing_session
+                        ).model_dump(exclude_none=False),
+                    },
                 )
 
             result = await database["dubbing_sessions"].insert_one(
@@ -117,7 +106,11 @@ class DubbingSessionController:
             )
             return JSONResponse(
                 status_code=201,
-                content={"session": DubbingSessionResponse.from_db(session).dict()},
+                content={
+                    "session": DubbingSessionResponse.from_db(
+                        session
+                    ).model_dump(exclude_none=False)
+                },
             )
 
         except (InvalidId, PyMongoError) as e:
@@ -271,7 +264,7 @@ class DubbingSessionController:
                 "message": "Dialogue uploaded successfully",
                 "session": DubbingSessionResponse.from_db(
                     updated_session
-                ).dict(),
+                ).model_dump(exclude_none=False),
                 "dialogue_info": {
                     "text": expected_dialogue.get("text"),
                     "expected_duration": expected_duration,
@@ -408,7 +401,11 @@ class DubbingSessionController:
 
             return JSONResponse(
                 status_code=200,
-                content={"session": DubbingSessionResponse.from_db(session).dict()},
+                content={
+                    "session": DubbingSessionResponse.from_db(
+                        session
+                    ).model_dump(exclude_none=False)
+                },
             )
 
         except (InvalidId, PyMongoError) as e:
@@ -442,7 +439,7 @@ class DubbingSessionController:
 
             sessions = []
             async for doc in cursor:
-                sessions.append(DubbingSessionResponse.from_db(doc).dict())
+                sessions.append(DubbingSessionResponse.from_db(doc).model_dump(exclude_none=False))
 
             total = await database["dubbing_sessions"].count_documents({"user_id": user_id})
 
@@ -724,17 +721,86 @@ class DubbingSessionController:
             log_info(logger, "Mixing background and voices...")
             final_audio = background_audio.overlay(modified_voices)
 
-            output_temp = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-            output_temp.close()
-            temp_files.append(output_temp.name)
+            output_temp_audio = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+            output_temp_audio.close()
+            temp_files.append(output_temp_audio.name)
 
             log_info(logger, "Exporting final audio...")
-            final_audio.export(output_temp.name, format="mp3", bitrate="192k")
+            final_audio.export(output_temp_audio.name, format="mp3", bitrate="192k")
 
-            log_info(logger, "Uploading final dubbed audio to R2...")
             r2_service = R2StorageService()
 
-            with open(output_temp.name, "rb") as f:
+            video_url = transcription.get("video_url")
+            final_video_url = None
+
+            if video_url:
+                log_info(logger, f"Video found, downloading: {video_url}")
+                try:
+                    video_response = requests.get(video_url, timeout=120)
+                    video_response.raise_for_status()
+
+                    video_ext = '.mp4'
+                    if '.webm' in video_url.lower():
+                        video_ext = '.webm'
+                    elif '.mov' in video_url.lower():
+                        video_ext = '.mov'
+
+                    video_temp = tempfile.NamedTemporaryFile(delete=False, suffix=video_ext)
+                    video_temp.write(video_response.content)
+                    video_temp.close()
+                    temp_files.append(video_temp.name)
+
+                    log_info(logger,
+                             "Video downloaded, combining with dubbed audio using ffmpeg...")
+
+                    output_video_temp = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+                    output_video_temp.close()
+                    temp_files.append(output_video_temp.name)
+
+                    ffmpeg_cmd = [
+                        'ffmpeg',
+                        '-i', video_temp.name,
+                        '-i', output_temp_audio.name,
+                        '-c:v', 'copy',
+                        '-c:a', 'aac',
+                        '-b:a', '192k',
+                        '-map', '0:v:0',
+                        '-map', '1:a:0',
+                        '-shortest',
+                        '-y',
+                        output_video_temp.name
+                    ]
+
+                    log_info(logger, f"Running ffmpeg: {' '.join(ffmpeg_cmd)}")
+                    result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True, check=False)
+
+                    if result.returncode != 0:
+                        log_error(logger, "FFmpeg failed", {
+                            "returncode": result.returncode,
+                            "stderr": result.stderr
+                        })
+                        raise RuntimeError(f"FFmpeg failed: {result.stderr}")
+
+                    log_info(logger, "Video processing completed, uploading to R2...")
+
+                    with open(output_video_temp.name, 'rb') as f:
+                        video_bytes = f.read()
+                        video_upload_result = await r2_service.upload_file_bytes(
+                            video_bytes,
+                            filename=f"dubbed_{session_id}.mp4",
+                            folder="dubbing/final_videos"
+                        )
+
+                    final_video_url = video_upload_result["file_url"]
+                    log_info(logger, f"Final dubbed video uploaded: {final_video_url}")
+
+                except Exception as e:
+                    log_error(logger, "Failed to process video", {"error": str(e)})
+                    log_info(logger, "Continuing with audio-only output")
+
+            log_info(logger, "Uploading final dubbed audio to R2...")
+
+            with open(output_temp_audio.name, "rb") as f:
                 audio_bytes = f.read()
 
                 upload_result = await r2_service.upload_file_bytes(
@@ -750,6 +816,7 @@ class DubbingSessionController:
                 {
                     "$set": {
                         "final_dubbed_audio_url": final_url,
+                        "final_dubbed_video_url": final_video_url,
                         "status": "completed",
                         "completed_at": datetime.utcnow(),
                     }
@@ -760,13 +827,25 @@ class DubbingSessionController:
 
             updated_session = await database["dubbing_sessions"].find_one({"_id": obj_id})
 
+            session_response = DubbingSessionResponse.from_db(updated_session)
+
+            response_content = {
+                "message": (
+                    "Dubbing processed successfully! Video with dubbed audio ready."
+                    if final_video_url
+                    else "Dubbing processed successfully!"
+                ),
+                "final_audio_url": final_url,
+                "session": session_response.model_dump(exclude_none=False),
+            }
+
+            if final_video_url:
+                response_content["final_video_url"] = final_video_url
+                log_info(logger, f"Response includes video URL: {final_video_url}")
+
             return JSONResponse(
                 status_code=200,
-                content={
-                    "message": "Dubbing processed successfully!",
-                    "final_audio_url": final_url,
-                    "session": DubbingSessionResponse.from_db(updated_session).dict(),
-                },
+                content=response_content,
             )
 
         except requests.RequestException as e:
@@ -1118,14 +1197,13 @@ class DubbingSessionController:
                 char_name = character.get("character_name")
                 dialogues_count = len(character.get("dialogues", []))
 
-                is_taken = char_id in taken_characters
-
                 characters.append({
                     "character_id": char_id,
                     "character_name": char_name,
                     "dialogues_count": dialogues_count,
-                    "is_available": not is_taken,
+                    "is_available": True,
                     "active_sessions": taken_characters.get(char_id, []),
+                    "active_sessions_count": len(taken_characters.get(char_id, [])),
                 })
 
             movie_id = transcription.get("movie_id")
@@ -1138,18 +1216,20 @@ class DubbingSessionController:
                     "movie_id": movie_id,
                     "clip_scene_id": clip_scene_id,
                     "total_characters": len(characters),
-                    "available_characters": sum(
-                        1 for c in characters if c["is_available"]
-                    ),
+                    "total_active_sessions": len(active_sessions),
                     "characters": characters,
                     "shareable_info": {
                         "message": (
-                            "Share this transcription_id with friends so they can dub "
-                            "other characters"
+                            "Share this transcription_id with friends! "
+                            "Everyone can dub any character they want."
                         ),
                         "transcription_id": transcription_id,
                         "url_format": (
                             f"http://your-frontend.com/dub/{transcription_id}"
+                        ),
+                        "note": (
+                            "For collaborative dubbing, use different characters "
+                            "and mix sessions together."
                         ),
                     },
                 },

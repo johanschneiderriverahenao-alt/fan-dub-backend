@@ -50,6 +50,7 @@ async def transcribe_audio_only(
 async def create_transcription(
     background_audio_file: UploadFile = None,
     voices_audio_file: UploadFile = None,
+    video_file: UploadFile = None,
     movie_id: str = Form(...),
     clip_scene_id: str = Form(...),
     duration: float = Form(...),
@@ -57,11 +58,12 @@ async def create_transcription(
     status: str = Form("pending"),
     _: dict = Depends(get_current_admin)
 ) -> JSONResponse:
-    """Create a transcription with audio files uploaded to R2 Storage.
+    """Create a transcription with audio/video files uploaded to R2 Storage.
 
     Accepts multipart form data:
     - background_audio_file: Audio file with background/music only (.mp3)
     - voices_audio_file: Audio file with all character voices (.mp3)
+    - video_file: Original video file (.mp4, .webm, etc) - OPTIONAL
     - movie_id: ID of the movie
     - clip_scene_id: ID of the clip/scene
     - duration: Duration in seconds
@@ -82,7 +84,7 @@ async def create_transcription(
 
         log_info(logger, f"Creating transcription for clip {clip_scene_id}")
         return await TranscriptionController.create_transcription(
-            background_audio_file, voices_audio_file, movie_id, clip_scene_id,
+            background_audio_file, voices_audio_file, video_file, movie_id, clip_scene_id,
             duration, parsed_characters, status)
     except (RuntimeError, OSError, PyMongoError) as e:
         log_error(logger, "create_transcription endpoint error", {"error": str(e)})
