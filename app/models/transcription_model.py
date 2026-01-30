@@ -40,6 +40,7 @@ class TranscriptionBase(BaseModel):
 
     movie_id: str = Field(..., description="ID of the associated movie")
     clip_scene_id: str = Field(..., description="ID of the associated clip/scene")
+    video_url: Optional[str] = Field(None, description="URL of the original video")
     background_audio_url: Optional[str] = Field(None,
                                                 description="URL of the background audio")
     voices_audio_url: Optional[str] = Field(None,

@@ -40,6 +40,9 @@ class DubbingSessionBase(BaseModel):
     final_dubbed_audio_url: Optional[str] = Field(
         None, description="URL of the final mixed audio"
     )
+    final_dubbed_video_url: Optional[str] = Field(
+        None, description="URL of the final dubbed video"
+    )
     status: str = Field(
         default="recording",
         description="Status: recording, processing, completed, error"
@@ -84,6 +87,7 @@ class DubbingSessionResponse(BaseModel):
     character_name: str
     dialogues_recorded: List[DialogueRecorded] = Field(default_factory=list)
     final_dubbed_audio_url: Optional[str] = None
+    final_dubbed_video_url: Optional[str] = None
     status: str
     created_at: str
     completed_at: Optional[str] = None
@@ -108,6 +112,7 @@ class DubbingSessionResponse(BaseModel):
             character_name=data.get("character_name"),
             dialogues_recorded=dialogues,
             final_dubbed_audio_url=data.get("final_dubbed_audio_url"),
+            final_dubbed_video_url=data.get("final_dubbed_video_url"),
             status=data.get("status", "recording"),
             created_at=(data.get("created_at") or datetime.utcnow()).isoformat(),
             completed_at=(
