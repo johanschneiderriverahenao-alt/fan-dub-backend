@@ -137,3 +137,104 @@ class EmailService:
                 {"error": str(e), "purpose": purpose}
             )
             return False
+
+    @staticmethod
+    def _get_first_dubbing_email_html(video_url: str) -> str:
+        """
+        Generate HTML template for first dubbing congratulations email.
+
+        Args:
+            video_url: URL of the dubbed video/audio.
+
+        Returns:
+            HTML string for email body.
+        """
+        html = f"""
+        <div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;border-radius:12px;overflow:hidden">
+            <div style="padding:24px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);text-align:center">
+                <h1 style="margin:0;color:#ffffff;font-size:28px">🎙️ YouDub</h1>
+                <p style="margin:8px 0 0;color:#e0e7ff;font-size:14px">Doblajes interactivos</p>
+            </div>
+
+            <div style="padding:32px">
+                <h2 style="color:#38bdf8;margin:0 0 16px 0">🎉 ¡Felicidades por tu primer doblaje!</h2>
+                <p style="line-height:1.6;margin:0 0 24px 0;font-size:16px">
+                    Has dado el primer paso en tu aventura como actor de doblaje. ¡Estamos emocionados de tenerte en YouDub! 🌟
+                </p>
+
+                <p style="line-height:1.6;margin:0 0 16px 0">
+                    Tu doblaje está listo y puedes verlo/escucharlo aquí:
+                </p>
+
+                <div style="margin:24px 0;padding:20px;text-align:center;background:#020617;border-radius:8px;border:2px solid #10b981">
+                    <a href="{video_url}" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:16px">
+                        ▶️ Ver mi doblaje
+                    </a>
+                </div>
+
+                <div style="margin:24px 0;padding:16px;background:#1e293b;border-left:4px solid #38bdf8;border-radius:4px">
+                    <p style="margin:0;font-size:14px;color:#94a3b8">
+                        💡 <strong style="color:#38bdf8">Tip:</strong> Comparte tu doblaje con amigos y familia. ¡Seguro les encantará!
+                    </p>
+                </div>
+
+                <p style="font-size:14px;color:#94a3b8;margin:24px 0 0 0;line-height:1.6">
+                    Continúa creando más doblajes y mejorando tus habilidades. La práctica hace al maestro. 🎬
+                </p>
+            </div>
+
+            <div style="padding:20px;background:#020617;text-align:center">
+                <p style="margin:0;font-size:12px;color:#64748b">
+                    © 2026 YouDub
+                </p>
+                <p style="margin:8px 0 0 0;font-size:11px;color:#475569">
+                    Enviado por <span style="color:#38bdf8">RH Studios</span>
+                </p>
+            </div>
+        </div>
+        """  # noqa: E501
+        return html
+
+    @staticmethod
+    async def send_first_dubbing_email(
+        email: str,
+        video_url: str
+    ) -> bool:
+        """
+        Send congratulations email for first dubbing.
+
+        Args:
+            email: Recipient email address.
+            video_url: URL of the dubbed video/audio.
+
+        Returns:
+            True if email sent successfully, False otherwise.
+        """
+        try:
+            subject = "🎉 ¡Felicidades por tu primer doblaje en YouDub!"
+
+            html_content = EmailService._get_first_dubbing_email_html(video_url)
+
+            params = {
+                "from": settings.resend_from_email,
+                "to": [email],
+                "subject": subject,
+                "html": html_content,
+            }
+
+            response = resend.Emails.send(params)
+
+            log_info(
+                logger,
+                f"First dubbing congratulations email sent to {email}",
+                {"response_id": response.get("id"), "video_url": video_url}
+            )
+            return True
+
+        except Exception as e:
+            log_error(
+                logger,
+                f"Failed to send first dubbing email to {email}",
+                {"error": str(e)}
+            )
+            return False
