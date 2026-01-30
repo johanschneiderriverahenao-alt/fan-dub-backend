@@ -1502,6 +1502,143 @@
         },
         {
           "name": "23. Delete Movie",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Movie deleted successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('detail');",
+              "    pm.expect(jsonData).to.have.property('movie_id');",
+              "    pm.expect(jsonData.detail).to.include('deleted successfully');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/movies/{{movieId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "movies",
+            "{{movieId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "24. Delete Saga",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Saga deleted successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('detail');",
+              "    pm.expect(jsonData).to.have.property('saga_id');",
+              "    pm.expect(jsonData.detail).to.include('deleted successfully');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/sagas/{{sagaId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "sagas",
+            "{{sagaId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "25. Delete Company",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Company deleted successfully', function() {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('detail');",
+              "    pm.expect(jsonData).to.have.property('company_id');",
+              "    pm.expect(jsonData.detail).to.include('deleted successfully');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/companies/{{companyId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "companies",
+            "{{companyId}}"
+          ]
+        }
+      },
+      "response": []
+    }
+      ]
+    },
+    {
+      "name": "Transcriptions",
+      "item": [
+        {
+          "name": "1. Transcribe Audio Only (No Save)",
           "event": [
             {
               "listen": "test",
@@ -1511,89 +1648,141 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test('Movie deleted successfully', function() {",
+                  "pm.test('Response has transcription text', function() {",
                   "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('detail');",
-                  "    pm.expect(jsonData).to.have.property('movie_id');",
-                  "    pm.expect(jsonData.detail).to.include('deleted successfully');",
+                  "    pm.expect(jsonData).to.have.property('transcription');",
+                  "    pm.expect(jsonData.transcription).to.be.a('string');",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
-          "id": "a6cc113f-dd43-4a67-b92f-e97b68c90bd7",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
             "header": [
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
               }
             ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio_file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
             "url": {
-              "raw": "http://localhost:8000/movies/{{movieId}}",
+              "raw": "http://localhost:8000/transcriptions/transcribe-only",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8000",
               "path": [
-                "movies",
-                "{{movieId}}"
+                "transcriptions",
+                "transcribe-only"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "24. Delete Saga",
+          "name": "2. Create Transcription (Admin)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200', function() {",
-                  "    pm.response.to.have.status(200);",
+                  "pm.test('Status code is 201', function() {",
+                  "    pm.response.to.have.status(201);",
                   "});",
                   "",
-                  "pm.test('Saga deleted successfully', function() {",
+                  "pm.test('Transcription created successfully', function() {",
                   "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('detail');",
-                  "    pm.expect(jsonData).to.have.property('saga_id');",
-                  "    pm.expect(jsonData.detail).to.include('deleted successfully');",
+                  "    pm.expect(jsonData).to.have.property('transcription');",
+                  "    pm.expect(jsonData.transcription).to.have.property('_id');",
+                  "    pm.expect(jsonData.transcription).to.have.property('background_audio_url');",
+                  "    pm.expect(jsonData.transcription).to.have.property('voices_audio_url');",
+                  "    ",
+                  "    // Save transcription ID",
+                  "    pm.environment.set('transcriptionId', jsonData.transcription._id);",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
-          "id": "eae4ae89-7538-4a6b-8d82-6a55223f20dc",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
             "header": [
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
               }
             ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "background_audio_file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Audio file with background/music only (.mp3)"
+                },
+                {
+                  "key": "voices_audio_file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Audio file with all character voices (.mp3)"
+                },
+                {
+                  "key": "movie_id",
+                  "value": "{{movieId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "clip_scene_id",
+                  "value": "{{clipSceneId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "duration",
+                  "value": "120.5",
+                  "type": "text"
+                },
+                {
+                  "key": "characters",
+                  "value": "[{\"character_name\":\"Diego\",\"character_id\":\"char_0\",\"dialogues\":[{\"dialogue_id\":\"dlg_0\",\"text\":\"¡Oye, Diego! ¡Ya se fueron!\",\"start_time\":5.2,\"end_time\":7.8}]}]",
+                  "type": "text",
+                  "description": "JSON array with character dialogues"
+                },
+                {
+                  "key": "status",
+                  "value": "completed",
+                  "type": "text"
+                }
+              ]
+            },
             "url": {
-              "raw": "http://localhost:8000/sagas/{{sagaId}}",
+              "raw": "http://localhost:8000/transcriptions/",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8000",
               "path": [
-                "sagas",
-                "{{sagaId}}"
+                "transcriptions",
+                ""
               ]
             }
           },
           "response": []
         },
         {
-          "name": "25. Delete Company",
+          "name": "3. Get Transcription",
           "event": [
             {
               "listen": "test",
@@ -1603,18 +1792,112 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "pm.test('Company deleted successfully', function() {",
+                  "pm.test('Response has transcription data', function() {",
                   "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property('detail');",
-                  "    pm.expect(jsonData).to.have.property('company_id');",
-                  "    pm.expect(jsonData.detail).to.include('deleted successfully');",
+                  "    pm.expect(jsonData).to.have.property('transcription');",
+                  "    pm.expect(jsonData.transcription).to.have.property('_id');",
+                  "    pm.expect(jsonData.transcription).to.have.property('characters');",
+                  "    pm.expect(jsonData.transcription).to.have.property('background_audio_url');",
+                  "    pm.expect(jsonData.transcription).to.have.property('voices_audio_url');",
                   "});"
-                ],
-                "type": "text/javascript"
+                ]
               }
             }
           ],
-          "id": "c26efe75-b88b-4a15-ad72-03c63584f427",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/transcriptions/{{transcriptionId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "transcriptions",
+                "{{transcriptionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Update Transcription (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Transcription updated successfully', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('transcription');",
+                  "    pm.expect(jsonData.transcription.status).to.equal('completed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\",\n  \"background_audio_url\": \"https://example.com/background-updated.mp3\",\n  \"voices_audio_url\": \"https://example.com/voices-updated.mp3\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/transcriptions/{{transcriptionId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "transcriptions",
+                "{{transcriptionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Delete Transcription (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Transcription deleted successfully', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('log');",
+                  "    pm.expect(jsonData.log).to.include('deleted successfully');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "DELETE",
             "header": [
@@ -1624,22 +1907,540 @@
               }
             ],
             "url": {
-              "raw": "http://localhost:8000/companies/{{companyId}}",
+              "raw": "http://localhost:8000/transcriptions/{{transcriptionId}}",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8000",
               "path": [
-                "companies",
-                "{{companyId}}"
+                "transcriptions",
+                "{{transcriptionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Get Transcriptions by Clip",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Transcriptions retrieved successfully', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('clip_scene_id');",
+                  "    pm.expect(jsonData).to.have.property('total_transcriptions');",
+                  "    pm.expect(jsonData).to.have.property('transcriptions');",
+                  "    pm.expect(jsonData.transcriptions).to.be.an('array');",
+                  "    ",
+                  "    // If transcriptions exist, save the first one",
+                  "    if (jsonData.transcriptions.length > 0) {",
+                  "        pm.environment.set('transcriptionId', jsonData.transcriptions[0]._id);",
+                  "        console.log('Found', jsonData.total_transcriptions, 'transcription(s)');",
+                  "        console.log('Saved first transcription ID:', jsonData.transcriptions[0]._id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/transcriptions/by-clip/{{clipSceneId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "transcriptions",
+                "by-clip",
+                "{{clipSceneId}}"
               ]
             }
           },
           "response": []
         }
-      ],
-      "id": "bb566546-d79a-45f2-bc61-d7559cd7097b"
+      ]
+    },
+    {
+      "name": "Dubbing Sessions",
+      "item": [
+        {
+          "name": "1. Create Dubbing Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Session created successfully', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('_id');",
+                  "    pm.expect(jsonData).to.have.property('user_id');",
+                  "    pm.expect(jsonData).to.have.property('transcription_id');",
+                  "    pm.expect(jsonData).to.have.property('character_id');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "    ",
+                  "    // Save session ID",
+                  "    pm.environment.set('dubbingSessionId', jsonData._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transcription_id\": \"{{transcriptionId}}\",\n  \"character_id\": \"char_0\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/dubbing-sessions/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "dubbing-sessions",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Upload Dialogue Recording",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Dialogue uploaded successfully', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData).to.have.property('session');",
+                  "    pm.expect(jsonData.session).to.have.property('dialogues_recorded');",
+                  "    pm.expect(jsonData.session.dialogues_recorded).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "dialogue_id",
+                  "value": "dlg_0",
+                  "type": "text",
+                  "description": "Dialogue ID from transcription"
+                },
+                {
+                  "key": "audio_file",
+                  "type": "file",
+                  "src": [],
+                  "description": "User's recorded audio for this dialogue"
+                }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:8000/dubbing-sessions/{{dubbingSessionId}}/upload-dialogue",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "dubbing-sessions",
+                "{{dubbingSessionId}}",
+                "upload-dialogue"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Session Dialogues (with status)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has dialogues list', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('dialogues');",
+                  "    pm.expect(jsonData).to.have.property('total_dialogues');",
+                  "    pm.expect(jsonData).to.have.property('recorded_dialogues');",
+                  "    pm.expect(jsonData).to.have.property('pending_dialogues');",
+                  "    pm.expect(jsonData).to.have.property('progress_percentage');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/dubbing-sessions/{{dubbingSessionId}}/dialogues",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "dubbing-sessions",
+                "{{dubbingSessionId}}",
+                "dialogues"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get Dubbing Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has session data', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('_id');",
+                  "    pm.expect(jsonData).to.have.property('user_id');",
+                  "    pm.expect(jsonData).to.have.property('transcription_id');",
+                  "    pm.expect(jsonData).to.have.property('character_id');",
+                  "    pm.expect(jsonData).to.have.property('dialogues_recorded');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/dubbing-sessions/{{dubbingSessionId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "dubbing-sessions",
+                "{{dubbingSessionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Get My Dubbing Sessions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has sessions array', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('sessions');",
+                  "    pm.expect(jsonData.sessions).to.be.an('array');",
+                  "    pm.expect(jsonData).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/dubbing-sessions/user/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "dubbing-sessions",
+                "user",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Delete Dubbing Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Session deleted successfully', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.include('deleted successfully');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/dubbing-sessions/{{dubbingSessionId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "dubbing-sessions",
+                "{{dubbingSessionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Process Dubbing (Mix Audio)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Final audio generated', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData).to.have.property('final_audio_url');",
+                  "    pm.expect(jsonData).to.have.property('session');",
+                  "    pm.expect(jsonData.session.status).to.equal('completed');",
+                  "    console.log('Final dubbed audio URL:', jsonData.final_audio_url);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/dubbing-sessions/{{dubbingSessionId}}/process",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "dubbing-sessions",
+                "{{dubbingSessionId}}",
+                "process"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8. Process Collaborative Dubbing (Multiple Users)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Collaborative audio generated', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData).to.have.property('final_audio_url');",
+                  "    pm.expect(jsonData).to.have.property('sessions_processed');",
+                  "    pm.expect(jsonData).to.have.property('characters_dubbed');",
+                  "    console.log('Collaborative dubbed audio URL:', jsonData.final_audio_url);",
+                  "    console.log('Characters:', jsonData.characters_dubbed);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_ids\": [\n    \"{{dubbingSessionId}}\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/dubbing-sessions/collaborative/process",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "dubbing-sessions",
+                "collaborative",
+                "process"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9. Get Dubbing Collaboration Info",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Dubbing info retrieved successfully', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('transcription_id');",
+                  "    pm.expect(jsonData).to.have.property('characters');",
+                  "    pm.expect(jsonData).to.have.property('available_characters');",
+                  "    pm.expect(jsonData).to.have.property('shareable_info');",
+                  "    pm.expect(jsonData.characters).to.be.an('array');",
+                  "    ",
+                  "    // Log available characters",
+                  "    console.log('Total characters:', jsonData.total_characters);",
+                  "    console.log('Available characters:', jsonData.available_characters);",
+                  "    jsonData.characters.forEach(char => {",
+                  "        const status = char.is_available ? '✅ AVAILABLE' : '❌ TAKEN';",
+                  "        console.log(`${char.character_name}: ${status} (${char.dialogues_count} dialogues)`);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8000/dubbing-sessions/transcription/{{transcriptionId}}/dubbing-info",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "dubbing-sessions",
+                "transcription",
+                "{{transcriptionId}}",
+                "dubbing-info"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [
@@ -1676,6 +2477,16 @@
     {
       "id": "e8f1dd61-6208-4954-a207-30ac8fcd675f",
       "key": "clipSceneId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transcriptionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dubbingSessionId",
       "value": "",
       "type": "string"
     }
