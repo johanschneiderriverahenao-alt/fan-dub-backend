@@ -16,6 +16,7 @@ from pymongo.errors import PyMongoError
 from pydub import AudioSegment
 
 from app.config.database import database
+from app.controllers.credit_controller import CreditController
 from app.models.dubbing_session_model import DubbingSessionResponse
 from app.services.r2_storage_service import R2StorageService
 from app.services.email_service import EmailService
@@ -42,6 +43,16 @@ class DubbingSessionController:
             JSONResponse with the created session
         """
         try:
+            can_create = await CreditController.check_can_create_dubbing(user_id)
+            if not can_create["can_create"]:
+                return JSONResponse(
+                    status_code=403,
+                    content={
+                        "detail": can_create["message"],
+                        "error_code": "INSUFFICIENT_CREDITS"
+                    }
+                )
+
             transcription = await database["transcriptions"].find_one(
                 {"_id": ObjectId(transcription_id)}
             )
@@ -97,9 +108,22 @@ class DubbingSessionController:
                 }
             )
 
+            # Consume the dubbing credit/slot
+            consume_result = await CreditController.consume_dubbing(
+                user_id, can_create["method"]
+            )
+            if consume_result.status_code != 200:
+                # Rollback session creation if credit consumption fails
+                await database["dubbing_sessions"].delete_one({"_id": result.inserted_id})
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": "Failed to consume dubbing credit"}
+                )
+
             log_info(
                 logger,
-                f"Dubbing session created for user {user_id}, character {character_id}",
+                f"Dubbing session created for user {user_id}, character {character_id} "
+                f"using method: {can_create['method']}",
             )
 
             session = await database["dubbing_sessions"].find_one(
