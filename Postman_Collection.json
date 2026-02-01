@@ -2764,6 +2764,692 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Credits & Payments",
+      "item": [
+        {
+          "name": "1. Get My Credits",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Credits data returned', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('user_id');",
+                  "    pm.expect(jsonData).to.have.property('paid_credits');",
+                  "    pm.expect(jsonData).to.have.property('daily_free_limit');",
+                  "    pm.expect(jsonData).to.have.property('current_daily_usage');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/credits/me",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["credits", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Check Dubbing Availability",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Availability info returned', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('can_create');",
+                  "    pm.expect(jsonData).to.have.property('method');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/credits/check-availability",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["credits", "check-availability"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Consume Dubbing (Free)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/credits/consume?method=free",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["credits", "consume"],
+              "query": [
+                {
+                  "key": "method",
+                  "value": "free",
+                  "description": "free | ad | credit"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get Available Plans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Plans returned', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    if (jsonData.data.length > 0) {",
+                  "        pm.environment.set('planName', jsonData.data[0].name);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8001/credits/packages",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["credits", "packages"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Create Payment Preference (MercadoPago)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Payment preference created', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('preference_id');",
+                  "    pm.expect(jsonData).to.have.property('init_point');",
+                  "    pm.expect(jsonData).to.have.property('transaction_id');",
+                  "    pm.environment.set('preferenceId', jsonData.preference_id);",
+                  "    console.log('Checkout URL:', jsonData.init_point);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/credits/payment-intent?package_name={{planName}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["credits", "payment-intent"],
+              "query": [
+                {
+                  "key": "package_name",
+                  "value": "{{planName}}",
+                  "description": "Starter | Pro | Ultimate"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Get My Transactions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Transactions returned', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    if (jsonData.data.length > 0) {",
+                  "        pm.environment.set('transactionId', jsonData.data[0]._id);",
+                  "        console.log('Transaction ID saved:', jsonData.data[0]._id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/credits/transactions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["credits", "transactions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Record Ad Watched",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/credits/ad-watched?ad_provider=google",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["credits", "ad-watched"],
+              "query": [
+                {
+                  "key": "ad_provider",
+                  "value": "google"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8. Get Usage Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/credits/usage-stats",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["credits", "usage-stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9. Delete Transaction",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Transaction deleted', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.detail).to.include('deleted');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/credits/transactions/{{transactionId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["credits", "transactions", "{{transactionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10. Delete All Transactions (Clear History)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Transaction history cleared', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('deleted_count');",
+                  "    pm.expect(jsonData.detail).to.include('cleared');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/credits/transactions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["credits", "transactions"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Plans Management",
+      "item": [
+        {
+          "name": "1. Get Active Plans (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Active plans returned', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    if (jsonData.data.length > 0) {",
+                  "        pm.environment.set('planId', jsonData.data[0]._id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8001/plans",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["plans"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Plan by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8001/plans/{{planId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["plans", "{{planId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create Plan (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Plan created', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('_id');",
+                  "    pm.environment.set('newPlanId', jsonData._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Premium\",\n  \"credits\": 200,\n  \"price_usd\": 59.99,\n  \"stripe_price_id\": \"\",\n  \"description\": \"Plan Premium con 200 créditos\",\n  \"features\": [\n    {\n      \"title\": \"200 créditos\",\n      \"description\": \"Máximo valor - 40% de descuento\",\n      \"is_highlighted\": true\n    },\n    {\n      \"title\": \"Sin expiración\",\n      \"description\": \"Los créditos nunca expiran\",\n      \"is_highlighted\": true\n    },\n    {\n      \"title\": \"Soporte VIP\",\n      \"description\": \"Atención prioritaria 24/7\",\n      \"is_highlighted\": true\n    }\n  ],\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8001/plans",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["plans"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get All Plans (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/plans/all",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["plans", "all"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Update Plan (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price_usd\": 54.99,\n  \"description\": \"Plan Premium actualizado - Oferta especial\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8001/plans/{{newPlanId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["plans", "{{newPlanId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Toggle Plan Status (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/plans/{{newPlanId}}/toggle",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["plans", "{{newPlanId}}", "toggle"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Delete Plan (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/plans/{{newPlanId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["plans", "{{newPlanId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Parametrization (Admin)",
+      "item": [
+        {
+          "name": "1. Get Daily Limits Config",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/parametrization/type/daily_limits",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["parametrization", "type", "daily_limits"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get All Parametrizations (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/parametrization",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["parametrization"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create Parametrization (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function() {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Parametrization created', function() {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('_id');",
+                  "    pm.environment.set('parametrizationId', jsonData._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ad_rewards\",\n  \"config\": {\n    \"reward_per_ad\": 1,\n    \"min_watch_time_seconds\": 15,\n    \"providers\": [\"google\", \"facebook\"]\n  },\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8001/parametrization",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["parametrization"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Update Parametrization (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"config\": {\n    \"free\": 5,\n    \"ads\": 5\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8001/parametrization/{{parametrizationId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["parametrization", "{{parametrizationId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Delete Parametrization (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8001/parametrization/{{parametrizationId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8001",
+              "path": ["parametrization", "{{parametrizationId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [
@@ -2822,6 +3508,31 @@
     {
       "id": "password-change-token-id",
       "key": "passwordChangeToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "planName",
+      "value": "Starter",
+      "type": "string"
+    },
+    {
+      "key": "planId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "newPlanId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "preferenceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "parametrizationId",
       "value": "",
       "type": "string"
     }

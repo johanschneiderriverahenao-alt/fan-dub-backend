@@ -2,6 +2,7 @@
 Authentication controller for user login and token management.
 """
 # pylint: disable=W0718,R0914,C0302
+# flake8: noqa: C901
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
@@ -15,6 +16,7 @@ from bson import ObjectId
 
 from app.config.settings import settings
 from app.config.database import database
+from app.controllers.credit_controller import CreditController
 from app.models.user import (
     UserLogin,
     UserResponse,
@@ -403,6 +405,13 @@ class AuthController:
             log_info(logger, f"User registered successfully with verification: {email_norm}")
 
             try:
+                await CreditController.initialize_user_credits(str(result.inserted_id))
+                log_info(logger, f"Credits initialized for user: {result.inserted_id}")
+            except Exception as credit_error:
+                log_error(logger, "Failed to initialize user credits",
+                          {"error": str(credit_error)})
+
+            try:
                 await AuthController._audit_log(
                     user_email=email_norm,
                     action="register_with_verification",
@@ -728,6 +737,13 @@ class AuthController:
             result = await database["users"].insert_one(new_user)
 
             log_info(logger, f"User registered successfully: {user_data.email}")
+
+            try:
+                await CreditController.initialize_user_credits(str(result.inserted_id))
+                log_info(logger, f"Credits initialized for user: {result.inserted_id}")
+            except Exception as credit_error:
+                log_error(logger, "Failed to initialize user credits",
+                          {"error": str(credit_error)})
 
             try:
                 await database["audit_logs"].insert_one({

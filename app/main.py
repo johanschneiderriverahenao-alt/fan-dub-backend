@@ -20,7 +20,10 @@ from app.views import (auth_views,
                        movie_views,
                        clip_scene_views,
                        news_views,
-                       dubbing_session_views)
+                       dubbing_session_views,
+                       credit_views,
+                       parametrization_views,
+                       plan_views)
 
 logger = get_logger(__name__)
 load_dotenv()
@@ -48,6 +51,9 @@ app.include_router(movie_views.router, tags=["movies"])
 app.include_router(clip_scene_views.router, tags=["clips_scenes"])
 app.include_router(news_views.router, tags=["news"])
 app.include_router(dubbing_session_views.router, tags=["dubbing_sessions"])
+app.include_router(credit_views.router, tags=["credits"])
+app.include_router(parametrization_views.router, tags=["parametrization"])
+app.include_router(plan_views.router, tags=["plans"])
 
 
 app.add_middleware(SessionMiddleware,
