@@ -30,7 +30,6 @@ async def get_plan_by_name(plan_name: str):
     return await PlanController.get_by_name(plan_name)
 
 
-# Admin endpoints
 @router.post("/")
 async def create_plan(
     plan_data: PlanCreate,

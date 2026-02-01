@@ -108,12 +108,10 @@ class DubbingSessionController:
                 }
             )
 
-            # Consume the dubbing credit/slot
             consume_result = await CreditController.consume_dubbing(
                 user_id, can_create["method"]
             )
             if consume_result.status_code != 200:
-                # Rollback session creation if credit consumption fails
                 await database["dubbing_sessions"].delete_one({"_id": result.inserted_id})
                 return JSONResponse(
                     status_code=500,
