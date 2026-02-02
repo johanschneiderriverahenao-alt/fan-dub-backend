@@ -98,6 +98,46 @@ def get_audit_logs_collection() -> AsyncIOMotorCollection:
     return database["audit_logs"]
 
 
+def get_companies_collection() -> AsyncIOMotorCollection:
+    """Get companies collection."""
+    return database["companies"]
+
+
+def get_sagas_collection() -> AsyncIOMotorCollection:
+    """Get sagas collection."""
+    return database["sagas"]
+
+
+def get_movies_collection() -> AsyncIOMotorCollection:
+    """Get movies collection."""
+    return database["movies"]
+
+
+def get_clips_scenes_collection() -> AsyncIOMotorCollection:
+    """Get clips_scenes collection."""
+    return database["clips_scenes"]
+
+
+def get_user_credits_collection() -> AsyncIOMotorCollection:
+    """Get user_credits collection for credit management."""
+    return database["user_credits"]
+
+
+def get_payment_transactions_collection() -> AsyncIOMotorCollection:
+    """Get payment_transactions collection for payment history."""
+    return database["payment_transactions"]
+
+
+def get_plans_collection() -> AsyncIOMotorCollection:
+    """Get plans collection for payment plans."""
+    return database["plans"]
+
+
+def get_parametrization_collection() -> AsyncIOMotorCollection:
+    """Get parametrization collection for system configuration."""
+    return database["parametrization"]
+
+
 async def connect_db() -> None:
     """
     Connect to MongoDB.

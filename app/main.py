@@ -12,7 +12,18 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config.settings import settings
 from app.config.database import client
 from app.utils.logger import get_logger, log_info, log_error
-from app.views import auth_views, audit_log_views
+from app.views import (auth_views,
+                       audit_log_views,
+                       transcription_view,
+                       company_views,
+                       saga_views,
+                       movie_views,
+                       clip_scene_views,
+                       news_views,
+                       dubbing_session_views,
+                       credit_views,
+                       parametrization_views,
+                       plan_views)
 
 logger = get_logger(__name__)
 load_dotenv()
@@ -33,6 +44,17 @@ app.add_middleware(
 
 app.include_router(auth_views.router, prefix="/auth", tags=["authentication"])
 app.include_router(audit_log_views.router, prefix="/audit", tags=["audit_logs"])
+app.include_router(transcription_view.router, tags=["transcriptions"])
+app.include_router(company_views.router, tags=["companies"])
+app.include_router(saga_views.router, tags=["sagas"])
+app.include_router(movie_views.router, tags=["movies"])
+app.include_router(clip_scene_views.router, tags=["clips_scenes"])
+app.include_router(news_views.router, tags=["news"])
+app.include_router(dubbing_session_views.router, tags=["dubbing_sessions"])
+app.include_router(credit_views.router, tags=["credits"])
+app.include_router(parametrization_views.router, tags=["parametrization"])
+app.include_router(plan_views.router, tags=["plans"])
+
 
 app.add_middleware(SessionMiddleware,
                    secret_key=os.getenv("SECRET_KEY", "your-secret-key"))

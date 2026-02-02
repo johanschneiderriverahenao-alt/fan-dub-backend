@@ -24,13 +24,27 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
-    # Use a simple string and parse it in a property
     cors_origins_str: str = "http://localhost:3000,http://localhost:8000"
 
-    # Optional Cloudinary settings
     cloudinary_cloud_name: str = ""
     cloudinary_api_key: str = ""
     cloudinary_api_secret: str = ""
+
+    r2_access_key_id: str = ""
+    r2_secret_access_key: str = ""
+    r2_endpoint_url: str = ""
+    r2_bucket_name: str = "dub-videos"
+    r2_public_url: str = ""
+
+    resend_api_key: str = ""
+    resend_from_email: str = "YouDub 🎙️ <onboarding@resend.dev>"
+
+    mercadopago_access_token: str = ""
+    mercadopago_public_key: str = ""
+    mercadopago_webhook_secret: str = ""
+    mercadopago_success_url: str = "http://localhost:3000/payment/success"
+    mercadopago_failure_url: str = "http://localhost:3000/payment/failure"
+    mercadopago_pending_url: str = "http://localhost:3000/payment/pending"
 
     app_name: str = "Fan Dub Backend"
     app_version: str = "1.0.0"

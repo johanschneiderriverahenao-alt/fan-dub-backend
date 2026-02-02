@@ -1,6 +1,6 @@
 # Fan Dub Backend
 
-Minimal FastAPI backend for user authentication and audit logging with MongoDB integration.
+FastAPI backend for managing movies, clip scenes, and video storage with MongoDB and Cloudflare R2.
 
 ## Architecture
 
@@ -8,6 +8,8 @@ Minimal FastAPI backend for user authentication and audit logging with MongoDB i
 Routes (API Endpoints)
     ↓
 Controllers (Business Logic)
+    ↓
+Services (R2 Storage, etc.)
     ↓
 Database (MongoDB + Motor async driver)
     ↓
@@ -40,7 +42,10 @@ app/
 │   ├── __init__.py
 │   └── logger.py          # Centralized logging
 ├── services/               # External services
-│   └── __init__.py
+│   ├── __init__.py
+│   └── r2_storage_service.py  # Cloudflare R2 video storage
+├── scripts/                # Utility scripts
+│   └── test_r2_connection.py  # Test R2 configuration
 ├── main.py                 # FastAPI application
 └── __init__.py
 ```
@@ -48,6 +53,10 @@ app/
 ## Features
 
 - **User Authentication**: Login with email and password
+- **Video Storage**: Upload and manage videos using Cloudflare R2
+- **Movie Management**: CRUD operations for movies and sagas
+- **Clip Scenes**: Manage scene clips with video uploads
+- **Transcriptions**: Handle scene transcriptions
 - **JWT Tokens**: Secure token-based authentication
 - **MongoDB Integration**: Async database operations with Motor
 - **Audit Logging**: Track all login operations
@@ -88,6 +97,18 @@ pip install -r requirements.txt
 ```bash
 # Copy and edit .env file
 cp .env.example .env
+```
+
+Edit `.env` with your configuration:
+- MongoDB connection
+- JWT secret key
+- Cloudinary credentials (for images)
+- **Cloudflare R2 credentials (for videos)** - See [CLOUDFLARE_R2_SETUP.md](CLOUDFLARE_R2_SETUP.md)
+
+### 5. Test R2 Connection (Optional)
+
+```bash
+python app/scripts/test_r2_connection.py
 ```
 
 Edit `.env` with your values:
