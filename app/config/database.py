@@ -118,6 +118,26 @@ def get_clips_scenes_collection() -> AsyncIOMotorCollection:
     return database["clips_scenes"]
 
 
+def get_user_credits_collection() -> AsyncIOMotorCollection:
+    """Get user_credits collection for credit management."""
+    return database["user_credits"]
+
+
+def get_payment_transactions_collection() -> AsyncIOMotorCollection:
+    """Get payment_transactions collection for payment history."""
+    return database["payment_transactions"]
+
+
+def get_plans_collection() -> AsyncIOMotorCollection:
+    """Get plans collection for payment plans."""
+    return database["plans"]
+
+
+def get_parametrization_collection() -> AsyncIOMotorCollection:
+    """Get parametrization collection for system configuration."""
+    return database["parametrization"]
+
+
 async def connect_db() -> None:
     """
     Connect to MongoDB.

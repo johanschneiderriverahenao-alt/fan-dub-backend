@@ -238,3 +238,123 @@ class EmailService:
                 {"error": str(e)}
             )
             return False
+
+    @staticmethod
+    def _get_payment_success_email_html(plan_name: str, num_credits: int, features: list) -> str:
+        """
+        Generate HTML template for payment success email.
+
+        Args:
+            plan_name: Name of the purchased plan.
+            num_credits: Number of credits purchased.
+            features: List of plan features.
+
+        Returns:
+            HTML string for email body.
+        """
+        features_html = ""
+        for feature in features:
+            icon = "✨" if feature.get("is_highlighted", False) else "✓"
+            features_html += f"""
+                <li style="margin:8px 0;color:#e5e7eb;font-size:14px">
+                    <span style="color:#10b981;font-weight:bold">{icon}</span> {feature.get('title', feature.get('description', ''))}
+                </li>
+            """  # noqa: E501
+
+        html = f"""
+        <div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;background:#0f172a;color:#e5e7eb;border-radius:12px;overflow:hidden">
+            <div style="padding:24px;background:linear-gradient(135deg, #10b981 0%, #059669 100%);text-align:center">
+                <h1 style="margin:0;color:#ffffff;font-size:28px">🎙️ YouDub</h1>
+                <p style="margin:8px 0 0;color:#d1fae5;font-size:14px">Doblajes interactivos</p>
+            </div>
+
+            <div style="padding:32px">
+                <h2 style="color:#10b981;margin:0 0 16px 0">🎉 ¡Gracias por tu compra!</h2>
+                <p style="line-height:1.6;margin:0 0 24px 0;font-size:16px">
+                    Tu pago ha sido procesado exitosamente. ¡Ahora tienes acceso a más doblajes! 🌟
+                </p>
+
+                <div style="margin:24px 0;padding:20px;background:#020617;border-radius:8px;border:2px solid #10b981">
+                    <h3 style="margin:0 0 12px 0;color:#38bdf8;font-size:20px">Plan adquirido: {plan_name}</h3>
+                    <p style="margin:0;font-size:28px;color:#10b981;font-weight:bold">{num_credits} créditos</p>
+                </div>
+
+                <div style="margin:24px 0;padding:16px;background:#1e293b;border-radius:8px">
+                    <h4 style="margin:0 0 12px 0;color:#38bdf8;font-size:16px">Beneficios incluidos:</h4>
+                    <ul style="margin:0;padding-left:20px;list-style:none">
+                        {features_html}
+                    </ul>
+                </div>
+
+                <div style="margin:24px 0;padding:16px;background:#1e293b;border-left:4px solid #10b981;border-radius:4px">
+                    <p style="margin:0;font-size:14px;color:#94a3b8">
+                        💡 <strong style="color:#10b981">Recordatorio:</strong> Tus créditos no expiran, úsalos cuando quieras.
+                    </p>
+                </div>
+
+                <p style="font-size:14px;color:#94a3b8;margin:24px 0 0 0;line-height:1.6">
+                    ¡Empieza a crear doblajes increíbles ahora! Si tienes alguna pregunta, estamos aquí para ayudarte.
+                </p>
+            </div>
+
+            <div style="padding:20px;background:#020617;text-align:center">
+                <p style="margin:0;font-size:12px;color:#64748b">
+                    © 2026 YouDub
+                </p>
+                <p style="margin:8px 0 0 0;font-size:11px;color:#475569">
+                    Enviado por <span style="color:#38bdf8">RH Studios</span>
+                </p>
+            </div>
+        </div>
+        """  # noqa: E501
+        return html
+
+    @staticmethod
+    async def send_payment_success_email(
+        email: str,
+        plan_name: str,
+        num_credits: int,
+        features: list
+    ) -> bool:
+        """
+        Send payment success confirmation email.
+
+        Args:
+            email: Recipient email address.
+            plan_name: Name of the purchased plan.
+            num_credits: Number of credits purchased.
+            features: List of plan features.
+
+        Returns:
+            True if email sent successfully, False otherwise.
+        """
+        try:
+            subject = f"🎉 ¡Compra exitosa! - Plan {plan_name}"
+
+            html_content = EmailService._get_payment_success_email_html(
+                plan_name, num_credits, features
+            )
+
+            params = {
+                "from": settings.resend_from_email,
+                "to": [email],
+                "subject": subject,
+                "html": html_content,
+            }
+
+            response = resend.Emails.send(params)
+
+            log_info(
+                logger,
+                f"Payment success email sent to {email}",
+                {"response_id": response.get("id"), "plan": plan_name, "credits": num_credits}
+            )
+            return True
+
+        except Exception as e:
+            log_error(
+                logger,
+                f"Failed to send payment success email to {email}",
+                {"error": str(e)}
+            )
+            return False

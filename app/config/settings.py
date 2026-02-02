@@ -39,6 +39,13 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from_email: str = "YouDub 🎙️ <onboarding@resend.dev>"
 
+    mercadopago_access_token: str = ""
+    mercadopago_public_key: str = ""
+    mercadopago_webhook_secret: str = ""
+    mercadopago_success_url: str = "http://localhost:3000/payment/success"
+    mercadopago_failure_url: str = "http://localhost:3000/payment/failure"
+    mercadopago_pending_url: str = "http://localhost:3000/payment/pending"
+
     app_name: str = "Fan Dub Backend"
     app_version: str = "1.0.0"
     debug: bool = False

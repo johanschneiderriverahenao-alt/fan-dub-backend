@@ -16,5 +16,6 @@ boto3
 pydub
 requests
 resend
+mercadopago
 flake8
 pylint
