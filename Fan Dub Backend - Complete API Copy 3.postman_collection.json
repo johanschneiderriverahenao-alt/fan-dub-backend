@@ -1794,7 +1794,6 @@
               }
             }
           ],
-          "id": "b65493f4-f43b-4d1a-85e0-0fd8a40a5148",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1840,7 +1839,6 @@
               }
             }
           ],
-          "id": "ebe18ac4-4807-4f26-b094-3f13e66c59bf",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1886,7 +1884,6 @@
               }
             }
           ],
-          "id": "18eeec69-a027-451c-b361-60bd01e0e322",
           "request": {
             "method": "DELETE",
             "header": [
@@ -1910,8 +1907,7 @@
           },
           "response": []
         }
-      ],
-      "id": "7023e8c9-0883-480f-a04d-81d9559cc3a7"
+      ]
     },
     {
       "name": "Transcriptions",
@@ -1937,7 +1933,6 @@
               }
             }
           ],
-          "id": "f4e5ca5c-e18c-4fce-af05-637a970418a5",
           "request": {
             "method": "POST",
             "header": [
@@ -1997,7 +1992,6 @@
               }
             }
           ],
-          "id": "7d8bdf8f-7425-42e6-830c-2e5fc0e55e40",
           "request": {
             "method": "POST",
             "header": [
@@ -2013,19 +2007,19 @@
                   "key": "background_audio_file",
                   "type": "file",
                   "description": "Audio file with background/music only (.mp3)",
-                  "src": []
+                  "value": null
                 },
                 {
                   "key": "voices_audio_file",
                   "type": "file",
                   "description": "Audio file with all character voices (.mp3)",
-                  "src": []
+                  "value": null
                 },
                 {
                   "key": "video_file",
                   "type": "file",
                   "description": "Original video file (.mp4, .webm) - OPTIONAL",
-                  "src": []
+                  "value": null
                 },
                 {
                   "key": "movie_id",
@@ -2094,7 +2088,6 @@
               }
             }
           ],
-          "id": "6acc1c15-3ce7-4196-8bf2-bf4ea829e707",
           "request": {
             "method": "GET",
             "header": [
@@ -2139,7 +2132,6 @@
               }
             }
           ],
-          "id": "48b10b18-9090-450c-958f-82ba5342e292",
           "request": {
             "method": "PUT",
             "header": [
@@ -2192,7 +2184,6 @@
               }
             }
           ],
-          "id": "6c25fe16-f4ce-4adb-a333-0ab8657a748c",
           "request": {
             "method": "DELETE",
             "header": [
@@ -2246,7 +2237,6 @@
               }
             }
           ],
-          "id": "2eded846-f4c2-4adf-a0d4-93a8f55c020b",
           "request": {
             "method": "GET",
             "header": [
@@ -2271,8 +2261,7 @@
           },
           "response": []
         }
-      ],
-      "id": "df95257f-97b0-4303-8d3a-8110ef0ade3e"
+      ]
     },
     {
       "name": "Dubbing Sessions",
@@ -2304,7 +2293,6 @@
               }
             }
           ],
-          "id": "c14bef28-456a-4cf7-93f2-8186f50c764a",
           "request": {
             "method": "POST",
             "header": [
@@ -2359,7 +2347,6 @@
               }
             }
           ],
-          "id": "72dd9757-9f44-4334-a437-087577c39c9f",
           "request": {
             "method": "POST",
             "header": [
@@ -2381,7 +2368,7 @@
                   "key": "audio_file",
                   "type": "file",
                   "description": "User's recorded audio for this dialogue",
-                  "src": []
+                  "value": null
                 }
               ]
             },
@@ -2425,7 +2412,6 @@
               }
             }
           ],
-          "id": "8c98b464-c217-4724-8574-757f6fae91f5",
           "request": {
             "method": "GET",
             "header": [
@@ -2475,7 +2461,6 @@
               }
             }
           ],
-          "id": "8e641c53-27f8-416e-9c22-ef7374d8b675",
           "request": {
             "method": "GET",
             "header": [
@@ -2521,7 +2506,6 @@
               }
             }
           ],
-          "id": "9db26cdc-2c11-47b8-bc73-ace5f44c69a8",
           "request": {
             "method": "GET",
             "header": [
@@ -2567,7 +2551,6 @@
               }
             }
           ],
-          "id": "07597244-a871-4b9b-ac8e-6e1c62cd8bdc",
           "request": {
             "method": "DELETE",
             "header": [
@@ -2623,7 +2606,6 @@
               }
             }
           ],
-          "id": "af4928ba-90ac-4bab-9725-df7582e363a3",
           "request": {
             "method": "POST",
             "header": [
@@ -2673,7 +2655,6 @@
               }
             }
           ],
-          "id": "5e1c5351-5734-4b0f-97ed-7acb7aad441e",
           "request": {
             "method": "POST",
             "header": [
@@ -2738,7 +2719,6 @@
               }
             }
           ],
-          "id": "cfa632f5-acf1-42bd-acc9-7682e06cada9",
           "request": {
             "method": "GET",
             "header": [
@@ -2764,53 +2744,6 @@
           },
           "response": []
         }
-      ],
-      "id": "621b990b-670d-4133-9806-f4291c73b4a8"
-    },
-    {
-      "name": "Carrusel",
-      "item": [
-        {
-          "name": "Create New",
-          "id": "8abc5bb3-212c-4e39-aff4-3405321b2beb",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OTdiZmY0ZGQzMDUwYTU5MjM2YTBiYzQiLCJleHAiOjE3Njk3OTE5NjV9.mrxVSlOi43g2s7PfNlZmYKPCZ3axQqmDKmiAicpeVNg"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"title\": \"New Season Release\",\n    \"description\": \"Watch the latest season now available on the platform.\",\n    \"image_url\": \"https://pub-abcf2d581e044485941913fa6e74638f.r2.dev/clips-scenes/sid1.png\",\n    \"link\": \"Test\",\n    \"label\": \"popular\"\n  }",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:8000/news",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8000",
-              "path": [
-                "news"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get News",
-          "id": "fde95983-12f1-4604-bf9e-eccc5c3a2308",
       ]
     },
     {
@@ -2843,33 +2776,6 @@
             "method": "GET",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OTdiZmY0ZGQzMDUwYTU5MjM2YTBiYzQiLCJleHAiOjE3Njk3MzgwOTJ9.0eh2qV3PE52nYX8M6ZgLiaY2fNID_CgQWVullODlTiA"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:8000/news",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8000",
-              "path": [
-                "news"
-              ]
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
               }
@@ -2890,39 +2796,6 @@
           "response": []
         },
         {
-          "name": "Update New",
-          "id": "151f5907-3d1c-4496-84c9-ce565d86bb3e",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OTdiZmY0ZGQzMDUwYTU5MjM2YTBiYzQiLCJleHAiOjE3Njk3OTE5NjV9.mrxVSlOi43g2s7PfNlZmYKPCZ3axQqmDKmiAicpeVNg"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"title\": \"Updated Title\",\n    \"description\": \"Updated short description\",\n    \"image_url\": \"https://cdn.example.com/images/updated.png\",\n    \"link\": \"PuTest\",\n    \"label\": \"trending\"\n  }",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:8000/news/697cdaeb292cb8c29095ed6b",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8000",
-              "path": [
-                "news",
-                "697cdaeb292cb8c29095ed6b"
           "name": "2. Check Dubbing Availability",
           "event": [
             {
@@ -2999,8 +2872,6 @@
           "response": []
         },
         {
-          "name": "Delete New",
-          "id": "3b2d4a56-2864-4a44-8026-80ed92ed5d75",
           "name": "4. Get Available Plans",
           "event": [
             {
@@ -3165,72 +3036,9 @@
             "url": {
               "raw": "http://localhost:8001/credits/usage-stats",
               "protocol": "http",
-              "host": ["localhost"],
-              "port": "8001",
-              "path": ["credits", "usage-stats"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "9. Delete Transaction",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 200', function() {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Transaction deleted', function() {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.detail).to.include('deleted');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OTdiZmY0ZGQzMDUwYTU5MjM2YTBiYzQiLCJleHAiOjE3Njk3OTE5NjV9.mrxVSlOi43g2s7PfNlZmYKPCZ3axQqmDKmiAicpeVNg"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:8000/news/697cdaeb292cb8c29095ed6b",
-              "protocol": "http",
               "host": [
                 "localhost"
               ],
-              "port": "8000",
-              "path": [
-                "news",
-                "697cdaeb292cb8c29095ed6b"
-              ],
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "http://localhost:8001/credits/transactions/{{transactionId}}",
-              "protocol": "http",
-              "host": ["localhost"],
               "port": "8001",
               "path": [
                 "credits",
@@ -3240,8 +3048,6 @@
           },
           "response": []
         }
-      ],
-      "id": "45bffcbf-c312-4f68-b76c-976b676e8f4c"
       ]
     },
     {
@@ -3667,13 +3473,11 @@
       "type": "string"
     },
     {
-      "id": "ff6a710a-bac7-41cf-875b-fe27fec8758b",
       "key": "transcriptionId",
       "value": "",
       "type": "string"
     },
     {
-      "id": "e1959ce2-d26a-42af-b26b-4b140e72206b",
       "key": "dubbingSessionId",
       "value": "",
       "type": "string"
