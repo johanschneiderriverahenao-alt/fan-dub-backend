@@ -17,6 +17,7 @@ from pymongo.errors import PyMongoError
 
 from app.controllers.movie_controller import MovieController
 from app.controllers.auth_controller import AuthController
+from app.controllers.movie_search_controller import MovieSearchController
 from app.models.movie_model import MovieCreate, MovieUpdate
 from app.utils.logger import get_logger, log_info, log_error
 from app.utils.dependencies import get_current_admin
@@ -75,6 +76,35 @@ async def get_all_movies(
         return JSONResponse(
             status_code=500,
             content={"detail": "Failed to fetch movies", "error": str(e)}
+        )
+
+
+@router.get("/movies/search", response_class=JSONResponse)
+async def search_movies(
+    q: str = Query(..., min_length=1, description="Regex pattern to search titles"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    _: dict = Depends(AuthController.get_current_user)
+) -> JSONResponse:
+    """
+    Search movies by regex on title.
+
+    Args:
+        q: Regular expression to search in movie titles.
+        page: Page number (default: 1)
+        page_size: Items per page (default: 10)
+
+    Returns:
+        JSONResponse with paginated search results (top 10 by similarity).
+    """
+    try:
+        log_info(logger, f"Searching movies - pattern: {q}, page: {page}, page_size: {page_size}")
+        return await MovieSearchController.search_movies_regex(q, page, page_size)
+    except (RuntimeError, PyMongoError) as e:
+        log_error(logger, "search_movies endpoint error", {"error": str(e)})
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Failed to search movies", "error": str(e)}
         )
 
 
