@@ -33,9 +33,8 @@ def _serialize(value: Any) -> Any:
     return value
 
 
-def _score_and_select_top(docs: List[Dict[str, Any]],
-                          pattern: str, top_n: int = 10) -> List[Dict[str, Any]]:
-    """Score documents by similarity on `movie_name` and return top N documents."""
+def _score_and_sort(docs: List[Dict[str, Any]], pattern: str) -> List[Dict[str, Any]]:
+    """Score documents by similarity on `movie_name` and sort by descending score."""
     pattern_norm = pattern.lower()
     scored: List[Dict[str, Any]] = []
     for d in docs:
@@ -44,7 +43,7 @@ def _score_and_select_top(docs: List[Dict[str, Any]],
         scored.append({"score": score, "doc": d})
 
     scored.sort(key=lambda x: x["score"], reverse=True)
-    return [item["doc"] for item in scored[:top_n]]
+    return [item["doc"] for item in scored]
 
 
 class MovieSearchController:
@@ -62,11 +61,13 @@ class MovieSearchController:
         return JSONResponse(
             status_code=200,
             content={
-                "items": items,
-                "total": total,
-                "page": page,
-                "page_size": page_size,
-                "total_pages": total_pages,
+                "data": items,
+                "pagination": {
+                    "page": page,
+                    "page_size": page_size,
+                    "total_items": total,
+                    "total_pages": total_pages
+                }
             },
         )
 
@@ -74,13 +75,12 @@ class MovieSearchController:
     async def search_movies_regex(pattern: str, page: int = 1, page_size: int = 10) -> JSONResponse:
         """Buscar películas por `pattern` (RegExp) sobre el campo `movie_name`.
 
-        Devuelve únicamente las 10 películas con mayor similitud y aplica paginación
-        sobre ese conjunto (skip/limit calculados en memoria).
+        Devuelve todas las películas que coinciden con el patrón, ordenadas por similitud
+        descendente, y aplica paginación sobre el conjunto completo.
         """
         log_info(logger, "Initiating movie regex search",
                  {"pattern": pattern, "page": page, "page_size": page_size})
 
-        # Buscar documentos que cumplan el RegExp (case-insensitive) sobre `movie_name`.
         try:
             cursor = database["movies"].find({"movie_name": {"$regex": pattern, "$options": "i"}})
             docs: List[Dict[str, Any]] = await cursor.to_list(length=1000)
@@ -93,15 +93,15 @@ class MovieSearchController:
         if not docs:
             return MovieSearchController.build_response([], 0, page, page_size)
 
-        top_ten = _score_and_select_top(docs, pattern, top_n=10)
+        sorted_results = _score_and_sort(docs, pattern)
 
-        total = len(top_ten)
+        total = len(sorted_results)
         skip = (page - 1) * page_size
-        page_items = top_ten[skip: skip + page_size]
+        page_items = sorted_results[skip: skip + page_size]
 
         items = [_serialize(doc) for doc in page_items]
 
         log_info(logger, "Movie regex search completed",
-                 {"pattern": pattern, "returned": len(items), "total_top": total})
+                 {"pattern": pattern, "returned": len(items), "total_matches": total})
 
         return MovieSearchController.build_response(items, total, page, page_size)
