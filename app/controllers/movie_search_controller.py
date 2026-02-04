@@ -47,7 +47,8 @@ def _score_and_sort(docs: List[Dict[str, Any]], pattern: str) -> List[Dict[str, 
 
 
 class MovieSearchController:
-    """Controller para búsqueda de películas usando expresión regular y paginación.
+    """
+    Controller for searching movies using regular expressions and pagination.
 
     Exposes a public search method and a helper to build JSON responses. Keeping
     small public methods reduces measured complexity in linters.
@@ -56,7 +57,9 @@ class MovieSearchController:
     @staticmethod
     def build_response(items: List[Dict[str, Any]],
                        total: int, page: int, page_size: int) -> JSONResponse:
-        """Construye el `JSONResponse` estándar para los endpoints de películas."""
+        """
+        Build the standard `JSONResponse` for movie endpoints.
+        """
         total_pages = math.ceil(total / page_size) if page_size > 0 else 1
         return JSONResponse(
             status_code=200,
@@ -73,10 +76,11 @@ class MovieSearchController:
 
     @staticmethod
     async def search_movies_regex(pattern: str, page: int = 1, page_size: int = 10) -> JSONResponse:
-        """Buscar películas por `pattern` (RegExp) sobre el campo `movie_name`.
+        """
+        Search for movies by `pattern` (RegExp) on the `movie_name` field.
 
-        Devuelve todas las películas que coinciden con el patrón, ordenadas por similitud
-        descendente, y aplica paginación sobre el conjunto completo.
+        Returns all movies that match the pattern, sorted by similarity in descending order,
+        and applies pagination to the entire set.
         """
         log_info(logger, "Initiating movie regex search",
                  {"pattern": pattern, "page": page, "page_size": page_size})
