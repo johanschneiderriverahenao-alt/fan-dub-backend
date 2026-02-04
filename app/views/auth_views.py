@@ -370,3 +370,47 @@ async def change_password_with_verification(
             status_code=500,
             content={"message": "Password change failed", "details": str(e)}
         )
+
+
+@router.put("/users/profile-image")
+async def update_profile_image(
+    image_profile_id: Dict[str, str],
+    current_user: Dict[str, Any] = Depends(get_current_user_from_token)
+) -> JSONResponse:
+    """
+    Update the current user's profile image.
+
+    Args:
+        image_profile_id: Dict containing "image_profile_id" field
+        current_user: Current authenticated user from token
+
+    Returns:
+        JSONResponse with updated user information.
+
+    Status Codes:
+        - 200: Profile image updated successfully.
+        - 400: Invalid image profile ID format.
+        - 404: Image profile or user not found.
+        - 500: Unexpected server error.
+    """
+    try:
+        if "image_profile_id" not in image_profile_id:
+            return JSONResponse(
+                status_code=400,
+                content={"message": "image_profile_id field is required"}
+            )
+
+        response = await AuthController.update_user_profile_image(
+            current_user["email"],
+            image_profile_id["image_profile_id"]
+        )
+        return response
+    except HTTPException as he:
+        logger.error("Validation error in update profile image endpoint: %s", str(he.detail))
+        return JSONResponse(status_code=he.status_code, content={"message": he.detail})
+    except Exception as e:
+        logger.error("Unexpected error in update profile image endpoint: %s", str(e))
+        return JSONResponse(
+            status_code=500,
+            content={"message": "Profile image update failed", "details": str(e)}
+        )
