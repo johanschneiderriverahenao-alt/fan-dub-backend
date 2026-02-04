@@ -394,7 +394,7 @@ class CreditController:
 
             user = None
             if user_oid:
-                user = await database["users"].find_one({"_id": user_oid})
+                user = await database["users"].find_one({"_id": ObjectId(user_oid)})
             if not user:
                 return JSONResponse(
                     status_code=404,
@@ -423,10 +423,8 @@ class CreditController:
                     "pending": settings.mercadopago_pending_url,
                 },
                 "auto_return": "approved",
-                "notification_url": (
-                    f"{settings.mercadopago_success_url.rsplit('/', 2)[0]}"
-                    "/credits/webhook"
-                ),
+                "statement_descriptor": "YOUDUB",
+                "external_reference": f"user_{user_id}_{plan['name']}",
                 "metadata": {
                     "user_id": user_id,
                     "package_name": plan["name"],
@@ -440,8 +438,37 @@ class CreditController:
                     content={"detail": "MercadoPago not configured"}
                 )
 
-            preference_response = MP_SDK.preference().create(preference_data)
-            preference = preference_response["response"]
+            try:
+                preference_response = MP_SDK.preference().create(preference_data)
+                log_info(logger, f"MercadoPago response: {preference_response}")
+
+                if "status" in preference_response and preference_response["status"] >= 400:
+                    error_msg = (
+                        preference_response
+                        .get("response", {})
+                        .get("message", "Unknown error")
+                    )
+                    log_error(logger, f"MercadoPago error: {error_msg}")
+                    return JSONResponse(
+                        status_code=500,
+                        content={"detail": f"MercadoPago error: {error_msg}"}
+                    )
+
+                preference = preference_response.get("response", preference_response)
+
+                if not preference.get("id"):
+                    log_error(logger, f"No preference ID in response: {preference_response}")
+                    return JSONResponse(
+                        status_code=500,
+                        content={"detail": "Invalid MercadoPago response"}
+                    )
+
+            except Exception as mp_error:
+                log_error(logger, f"MercadoPago SDK error: {str(mp_error)}")
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": f"Payment gateway error: {str(mp_error)}"}
+                )
 
             transaction_data = PaymentTransactionCreate(
                 user_id=user_id,
@@ -544,6 +571,7 @@ class CreditController:
                 f"from payment {payment_id}"
             )
 
+            # Send payment success email
             try:
                 user = None
                 try:
@@ -552,7 +580,7 @@ class CreditController:
                     trans_user_oid = None
 
                 if trans_user_oid:
-                    user = await database["users"].find_one({"_id": trans_user_oid})
+                    user = await database["users"].find_one({"_id": ObjectId(trans_user_oid)})
                 if user:
                     plan = await database["plans"].find_one({"name": transaction["package_name"]})
                     if plan:
@@ -565,6 +593,11 @@ class CreditController:
                             num_credits=credits_to_add,
                             features=plan.get("features", []),
                         )
+                        log_info(logger, f"Payment confirmation email sent to {user.get('email')}")
+                    else:
+                        log_error(logger, f"Plan not found: {transaction['package_name']}")
+                else:
+                    log_error(logger, f"User not found: {transaction['user_id']}")
             except Exception as email_error:
                 log_error(logger, f"Error sending payment success email: {str(email_error)}")
 
