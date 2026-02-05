@@ -108,6 +108,31 @@ async def search_movies(
         )
 
 
+@router.get("/movies/random", response_class=JSONResponse)
+async def get_random_movies(
+    limit: int = Query(12, ge=1, le=100, description="Number of random movies"),
+    _: dict = Depends(AuthController.get_current_user)
+) -> JSONResponse:
+    """
+    Get random movies from the database.
+
+    Args:
+        limit: Number of random movies to retrieve (default: 12, max: 100)
+
+    Returns:
+        JSONResponse with random movies list
+    """
+    try:
+        log_info(logger, f"Fetching {limit} random movies")
+        return await MovieController.get_random_movies(limit)
+    except (RuntimeError, PyMongoError) as e:
+        log_error(logger, "get_random_movies endpoint error", {"error": str(e)})
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Failed to fetch random movies", "error": str(e)}
+        )
+
+
 @router.get("/movies/{movie_id}", response_class=JSONResponse)
 async def get_movie(
     movie_id: str,
