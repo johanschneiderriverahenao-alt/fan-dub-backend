@@ -3,6 +3,7 @@
 Main FastAPI application with lifespan events and middleware configuration.
 """
 
+# Force fresh deploy
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
