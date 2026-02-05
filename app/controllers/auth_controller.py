@@ -13,6 +13,7 @@ from jose import JWTError, jwt
 from fastapi import HTTPException, status, Header
 from fastapi.responses import JSONResponse
 from bson import ObjectId
+from bson.errors import InvalidId
 
 from app.config.settings import settings
 from app.config.database import database
@@ -1130,4 +1131,80 @@ class AuthController:
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={"error": "Failed to update user role", "details": str(e)},
+            )
+
+    @staticmethod
+    async def update_user_profile_image(
+        user_email: str,
+        image_profile_id: str
+    ) -> JSONResponse:
+        """
+        Update a user's profile image.
+
+        Args:
+            user_email: User email
+            image_profile_id: ImageProfile ID to associate
+
+        Returns:
+            JSONResponse with updated user data
+
+        Raises:
+            HTTPException: If user or image profile not found
+        """
+        try:
+            try:
+                image_oid = ObjectId(image_profile_id)
+            except InvalidId:
+                return JSONResponse(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content={"error": "Invalid image profile ID format"}
+                )
+
+            image_profile = await database["image_profiles"].find_one({"_id": image_oid})
+            if not image_profile:
+                return JSONResponse(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    content={"error": "Image profile not found"}
+                )
+
+            email_norm = user_email.lower()
+
+            result = await database["users"].update_one(
+                {"email": email_norm},
+                {"$set": {"image_profile_id": image_profile_id}}
+            )
+
+            if getattr(result, "matched_count", 0) == 0:
+                return JSONResponse(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    content={"error": "User not found"}
+                )
+
+            updated_user = await database["users"].find_one({"email": email_norm})
+
+            user_response = {
+                "_id": str(updated_user["_id"]),
+                "email": updated_user["email"],
+                "role": updated_user.get("role", "user"),
+                "image_profile_id": updated_user.get("image_profile_id"),
+                "created_at": updated_user["created_at"].isoformat()
+                if isinstance(updated_user["created_at"], datetime)
+                else updated_user["created_at"]
+            }
+
+            log_info(logger, f"User {user_email} profile image updated")
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "message": "Profile image updated successfully",
+                    "user": user_response
+                }
+            )
+
+        except Exception as e:
+            log_error(logger, "Error updating user profile image", {"error": str(e)})
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"error": "Failed to update profile image", "details": str(e)}
             )
