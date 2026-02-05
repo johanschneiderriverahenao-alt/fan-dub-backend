@@ -387,7 +387,14 @@ class CreditController:
                     content={"detail": "Package not found"}
                 )
 
-            user = await database["users"].find_one({"_id": ObjectId(user_id)})
+            try:
+                user_oid = ObjectId(user_id)
+            except Exception:
+                user_oid = None
+
+            user = None
+            if user_oid:
+                user = await database["users"].find_one({"_id": ObjectId(user_oid)})
             if not user:
                 return JSONResponse(
                     status_code=404,
@@ -566,7 +573,14 @@ class CreditController:
 
             # Send payment success email
             try:
-                user = await database["users"].find_one({"_id": ObjectId(transaction["user_id"])})
+                user = None
+                try:
+                    trans_user_oid = ObjectId(transaction["user_id"])
+                except Exception:
+                    trans_user_oid = None
+
+                if trans_user_oid:
+                    user = await database["users"].find_one({"_id": ObjectId(trans_user_oid)})
                 if user:
                     plan = await database["plans"].find_one({"name": transaction["package_name"]})
                     if plan:

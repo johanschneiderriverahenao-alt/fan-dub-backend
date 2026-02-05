@@ -384,3 +384,49 @@ class MovieController:
                 status_code=500,
                 content={"detail": "Failed to delete movie", "error": str(e)}
             )
+
+    @staticmethod
+    async def get_random_movies(limit: int = 12) -> JSONResponse:
+        """
+        Retrieve random movies from the database.
+
+        Args:
+            limit: Number of random movies to retrieve (default: 12)
+
+        Returns:
+            JSONResponse with random movies list
+
+        Raises:
+            PyMongoError: If database operation fails
+        """
+        try:
+            collection = database["movies"]
+
+            pipeline = [
+                {"$sample": {"size": limit}},
+                {"$sort": {"timestamp": -1}}
+            ]
+
+            cursor = collection.aggregate(pipeline)
+            movies = await cursor.to_list(length=None)
+
+            movies_response = [
+                MovieResponse.from_mongo(movie).model_dump(by_alias=True)
+                for movie in movies
+            ]
+
+            log_info(logger, f"Retrieved {len(movies_response)} random movies")
+
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "data": movies_response,
+                    "count": len(movies_response)
+                }
+            )
+        except PyMongoError as e:
+            log_error(logger, "Error fetching random movies", {"error": str(e)})
+            return JSONResponse(
+                status_code=500,
+                content={"detail": "Failed to fetch random movies", "error": str(e)}
+            )
