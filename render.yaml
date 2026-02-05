@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: fan-dub-backend
+    env: python
+    plan: free
+    buildCommand: >
+      apt-get update &&
+      apt-get install -y ffmpeg &&
+      pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    pythonVersion: 3.13
