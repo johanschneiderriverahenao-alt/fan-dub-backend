@@ -13,9 +13,7 @@ itsdangerous
 starlette
 cloudinary
 boto3
-# pydub is only needed locally for development with ffmpeg installed
-# Commented out for production deployment on Render (free tier)
-# pydub
+pydub
 requests
 resend
 mercadopago

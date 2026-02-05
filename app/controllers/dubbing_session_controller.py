@@ -13,6 +13,7 @@ from fastapi import UploadFile
 from bson import ObjectId
 from bson.errors import InvalidId
 from pymongo.errors import PyMongoError
+from pydub import AudioSegment
 
 from app.config.database import database
 from app.controllers.credit_controller import CreditController
@@ -22,19 +23,6 @@ from app.services.email_service import EmailService
 from app.utils.logger import get_logger, log_info, log_error
 
 logger = get_logger(__name__)
-
-
-def get_audio_segment():
-    """Lazy import of AudioSegment. Raises error if pydub not installed."""
-    try:
-        from pydub import AudioSegment
-        return AudioSegment
-    except ImportError as e:
-        raise ImportError(
-            "pydub is required for audio processing. "
-            "Install it locally: pip install pydub. "
-            "Audio processing is only available in development mode."
-        ) from e
 
 
 class DubbingSessionController:
@@ -239,7 +227,6 @@ class DubbingSessionController:
                 temp_validation.write(content)
                 temp_validation.close()
 
-                AudioSegment = get_audio_segment()
                 test_audio = AudioSegment.from_file(temp_validation.name)
                 log_info(logger,
                          f"Audio validated: {len(test_audio)}ms duration, format: {file_ext}")
@@ -553,8 +540,6 @@ class DubbingSessionController:
         """
         temp_files = []
         try:
-            AudioSegment = get_audio_segment()
-            
             obj_id = ObjectId(session_id)
             session = await database["dubbing_sessions"].find_one({"_id": obj_id})
 
@@ -947,8 +932,6 @@ class DubbingSessionController:
         """
         temp_files = []
         try:
-            AudioSegment = get_audio_segment()
-            
             if not session_ids or len(session_ids) == 0:
                 return JSONResponse(
                     status_code=400,
