@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     r2_public_url: str = ""
 
     resend_api_key: str = ""
-    resend_from_email: str = "YouDub 🎙️ <onboarding@resend.dev>"
+    resend_from_email: str = "YouDub 🎙️ <noreply@youdubapp.com>"
 
     mercadopago_access_token: str = ""
     mercadopago_public_key: str = ""
