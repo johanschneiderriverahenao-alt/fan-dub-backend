@@ -45,6 +45,7 @@ app.add_middleware(
 )
 app.include_router(image_profiles_views.router, tags=["Image Profiles"])
 app.include_router(auth_views.router, prefix="/auth", tags=["authentication"])
+app.include_router(auth_views.user_router, tags=["users"])  # User endpoints without /auth prefix
 app.include_router(audit_log_views.router, prefix="/audit", tags=["audit_logs"])
 app.include_router(transcription_view.router, tags=["transcriptions"])
 app.include_router(company_views.router, tags=["companies"])

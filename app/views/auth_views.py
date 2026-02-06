@@ -24,6 +24,7 @@ from app.utils.dependencies import get_current_user_from_token, get_current_admi
 logger = get_logger(__name__)
 
 router = APIRouter()
+user_router = APIRouter()  # Router for user-specific endpoints without /auth prefix
 
 
 @router.post("/register")
@@ -372,7 +373,7 @@ async def change_password_with_verification(
         )
 
 
-@router.put("/users/profile-image")
+@user_router.put("/users/profile-image")
 async def update_profile_image(
     image_profile_id: Dict[str, str],
     current_user: Dict[str, Any] = Depends(get_current_user_from_token)
